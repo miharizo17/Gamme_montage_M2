@@ -1,4 +1,4 @@
-import logo from '../assets/logo-loi-confection.png'
+import logo from '../assets/img/logo-loi-confection.png'
 import '../assets/css/BrandBlock.css'
 
 function BrandBlock() {
