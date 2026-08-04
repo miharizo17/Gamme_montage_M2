@@ -14,10 +14,10 @@
 
 CREATE TABLE IF NOT EXISTS article (
     id          SERIAL PRIMARY KEY,
-    code        VARCHAR(50)  NOT NULL UNIQUE,   -- reference du prototype (ex: DEMO-001)
+    code        VARCHAR(150) NOT NULL UNIQUE,   -- reference du prototype (ex: DEMO-001, ou chemin relatif nettoye pour les imports reels)
     nom         VARCHAR(200) NOT NULL,
     description TEXT,                            -- description du prototype (entree du moteur NLP)
-    source      VARCHAR(200)                      -- dossier/fichier d'origine, ou "donnees de test"
+    source      VARCHAR(300)                      -- dossier/fichier d'origine, ou "donnees de test"
 );
 
 CREATE TABLE IF NOT EXISTS operateur (

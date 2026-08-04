@@ -24,10 +24,10 @@ class Article(Base_chebdo):
     __tablename__ = "article"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
     nom: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    source: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(300), nullable=True)
 
     gammes: Mapped[list["Gamme"]] = relationship(back_populates="article")
 

@@ -9,12 +9,16 @@ from schema import (
     ArticleOut,
     ArticleUpdate,
     CompetenceOut,
+    GammeGenereeOut,
     GammeLigneCreate,
     GammeLigneOut,
     GammeLigneUpdate,
+    GenererGammeIn,
+    MatchGammeOut,
     OperateurListOut,
+    RechercheDescriptionIn,
 )
-from service import article_service, gamme_service, operateur_service
+from service import article_service, gamme_service, generation_service, matching_service, operateur_service
 from service.article_service import CodeDejaExistant
 
 app = FastAPI(title="Gamme Montage API")
@@ -94,6 +98,25 @@ def obtenir_competences_operateur(operateur_id: int, db: Session = Depends(get_d
     if not operateur_service.operateur_existe(db, operateur_id):
         raise HTTPException(status_code=404, detail="Operateur introuvable")
     return operateur_service.obtenir_competences(db, operateur_id)
+
+
+@app.post("/gammes/similaires", response_model=list[MatchGammeOut])
+def rechercher_gammes_similaires(data: RechercheDescriptionIn, db: Session = Depends(get_db)):
+    return matching_service.rechercher_gammes_similaires(db, data.description, top_k=data.top_k)
+
+
+@app.post("/gammes/reindexer")
+def reindexer_moteur_matching(db: Session = Depends(get_db)):
+    nb_gammes = matching_service.reindexer(db)
+    return {"gammes_indexees": nb_gammes}
+
+
+@app.post("/gammes/generer", response_model=GammeGenereeOut)
+def generer_gamme(data: GenererGammeIn, db: Session = Depends(get_db)):
+    resultat = generation_service.generer_gamme(db, data.description)
+    if resultat is None:
+        raise HTTPException(status_code=404, detail="Aucune gamme historique exploitable trouvee")
+    return resultat
 
 
 def main():
