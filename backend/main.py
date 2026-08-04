@@ -1,8 +1,8 @@
-from fastapi import Depends, FastAPI, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
-from schema import ArticleListOut
+from schema import ArticleDetailOut, ArticleListOut
 from service import article_service
 
 app = FastAPI(title="Gamme Montage API")
@@ -23,6 +23,14 @@ def lister_articles(
     db: Session = Depends(get_db),
 ):
     return article_service.lister_articles(db, skip=skip, limit=limit)
+
+
+@app.get("/articles/{article_id}", response_model=ArticleDetailOut)
+def obtenir_article(article_id: int, db: Session = Depends(get_db)):
+    article = article_service.obtenir_article_detail(db, article_id)
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article introuvable")
+    return article
 
 
 def main():

@@ -1,3 +1,4 @@
-from .article import ArticleListOut, ArticleOut
+from .article import ArticleDetailOut, ArticleListOut, ArticleOut
+from .gamme import GammeLigneOut
 
-__all__ = ["ArticleListOut", "ArticleOut"]
+__all__ = ["ArticleDetailOut", "ArticleListOut", "ArticleOut", "GammeLigneOut"]
