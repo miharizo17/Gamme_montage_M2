@@ -23,10 +23,10 @@ def build_database_url() -> str:
         return direct_url
 
     host = os.getenv("DB_HOST", "127.0.0.1")
-    port = os.getenv("DB_PORT", "5430")
-    name = os.getenv("DB_NAME", "test_erp")
-    user = quote_plus(os.getenv("DB_USER", "loi"))
-    password = quote_plus(os.getenv("DB_PASSWORD", "loi-erp"))
+    port = os.getenv("DB_PORT", "5432")
+    name = os.getenv("DB_NAME", "gamme_montage")
+    user = quote_plus(os.getenv("DB_USER", "postgres"))
+    password = quote_plus(os.getenv("DB_PASSWORD", "Kanto17"))
     return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 
 

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.env
+backend/*.db
+backend/scripts/rapport_equilibrage*
