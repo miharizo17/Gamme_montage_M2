@@ -2,8 +2,8 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
-from schema import ArticleDetailOut, ArticleListOut
-from service import article_service
+from schema import ArticleDetailOut, ArticleListOut, CompetenceOut, OperateurListOut
+from service import article_service, operateur_service
 
 app = FastAPI(title="Gamme Montage API")
 
@@ -31,6 +31,22 @@ def obtenir_article(article_id: int, db: Session = Depends(get_db)):
     if article is None:
         raise HTTPException(status_code=404, detail="Article introuvable")
     return article
+
+
+@app.get("/operateurs", response_model=OperateurListOut)
+def lister_operateurs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    return operateur_service.lister_operateurs(db, skip=skip, limit=limit)
+
+
+@app.get("/operateurs/{operateur_id}/competences", response_model=list[CompetenceOut])
+def obtenir_competences_operateur(operateur_id: int, db: Session = Depends(get_db)):
+    if not operateur_service.operateur_existe(db, operateur_id):
+        raise HTTPException(status_code=404, detail="Operateur introuvable")
+    return operateur_service.obtenir_competences(db, operateur_id)
 
 
 def main():
