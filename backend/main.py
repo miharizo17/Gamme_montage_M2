@@ -2,8 +2,20 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
-from schema import ArticleDetailOut, ArticleListOut, CompetenceOut, OperateurListOut
-from service import article_service, operateur_service
+from schema import (
+    ArticleCreate,
+    ArticleDetailOut,
+    ArticleListOut,
+    ArticleOut,
+    ArticleUpdate,
+    CompetenceOut,
+    GammeLigneCreate,
+    GammeLigneOut,
+    GammeLigneUpdate,
+    OperateurListOut,
+)
+from service import article_service, gamme_service, operateur_service
+from service.article_service import CodeDejaExistant
 
 app = FastAPI(title="Gamme Montage API")
 
@@ -31,6 +43,41 @@ def obtenir_article(article_id: int, db: Session = Depends(get_db)):
     if article is None:
         raise HTTPException(status_code=404, detail="Article introuvable")
     return article
+
+
+@app.post("/articles", response_model=ArticleOut, status_code=201)
+def creer_article(data: ArticleCreate, db: Session = Depends(get_db)):
+    try:
+        return article_service.creer_article(db, data)
+    except CodeDejaExistant:
+        raise HTTPException(status_code=409, detail=f"Le code '{data.code}' existe deja")
+
+
+@app.put("/articles/{article_id}", response_model=ArticleOut)
+def modifier_article(article_id: int, data: ArticleUpdate, db: Session = Depends(get_db)):
+    try:
+        article = article_service.modifier_article(db, article_id, data)
+    except CodeDejaExistant:
+        raise HTTPException(status_code=409, detail=f"Le code '{data.code}' existe deja")
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article introuvable")
+    return article
+
+
+@app.post("/articles/{article_id}/gamme", response_model=ArticleDetailOut, status_code=201)
+def creer_gamme(article_id: int, lignes: list[GammeLigneCreate], db: Session = Depends(get_db)):
+    resultat = gamme_service.creer_gamme(db, article_id, lignes)
+    if resultat is None:
+        raise HTTPException(status_code=404, detail="Article introuvable")
+    return resultat
+
+
+@app.put("/gamme-lignes/{ligne_id}", response_model=GammeLigneOut)
+def modifier_ligne_gamme(ligne_id: int, data: GammeLigneUpdate, db: Session = Depends(get_db)):
+    ligne = gamme_service.modifier_ligne_gamme(db, ligne_id, data)
+    if ligne is None:
+        raise HTTPException(status_code=404, detail="Ligne de gamme introuvable")
+    return ligne
 
 
 @app.get("/operateurs", response_model=OperateurListOut)

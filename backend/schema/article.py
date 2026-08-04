@@ -23,3 +23,17 @@ class ArticleListOut(BaseModel):
 class ArticleDetailOut(ArticleOut):
     gamme_id: int | None = None
     lignes_gamme: list[GammeLigneOut] = []
+
+
+class ArticleCreate(BaseModel):
+    code: str
+    nom: str
+    description: str | None = None
+    source: str | None = None
+
+
+class ArticleUpdate(BaseModel):
+    code: str | None = None
+    nom: str | None = None
+    description: str | None = None
+    source: str | None = None
