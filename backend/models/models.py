@@ -6,6 +6,21 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base_chebdo
 
 
+class Utilisateur(Base_chebdo):
+    """Compte permettant de se connecter a l'application. Deux roles :
+    'agent_methode' (usage courant : generer/editer/enregistrer des gammes)
+    et 'administrateur' (en plus : gestion des comptes, reindexation)."""
+
+    __tablename__ = "utilisateur"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    nom_utilisateur: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    mot_de_passe_hash: Mapped[str] = mapped_column(String(200), nullable=False)
+    role: Mapped[str] = mapped_column(String(30), nullable=False, default="agent_methode")
+    actif: Mapped[bool] = mapped_column(Boolean, default=True)
+    date_creation: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class Operateur(Base_chebdo):
     __tablename__ = "operateur"
 
@@ -32,7 +47,9 @@ class Article(Base_chebdo):
     # "LINE 9 LAURETTE"). None si non detectable (chemin trop irregulier).
     chaine: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    gammes: Mapped[list["Gamme"]] = relationship(back_populates="article")
+    gammes: Mapped[list["Gamme"]] = relationship(
+        back_populates="article", cascade="all, delete-orphan"
+    )
 
 
 class Gamme(Base_chebdo):

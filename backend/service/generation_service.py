@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from models import Article, Competence, Operateur
 from schema import GammeGenereeOut, OperationProposeeOut
-from service import chaine_service, matching_service, ml_service
+from service import chaine_service, equilibrage_service, matching_service, ml_service
 
 
 def _meilleure_competence(db: Session, operation_libelle: str, chaine: str | None):
@@ -49,7 +49,9 @@ def _meilleure_competence(db: Session, operation_libelle: str, chaine: str | Non
     return competence, None
 
 
-def generer_gamme(db: Session, description: str, chaine: str | None = None) -> GammeGenereeOut | None:
+def generer_gamme(
+    db: Session, description: str, chaine: str | None = None, equilibrer_charge: bool = False
+) -> GammeGenereeOut | None:
     matches = matching_service.rechercher_gammes_similaires(db, description, top_k=1)
     if not matches:
         return None
@@ -107,6 +109,11 @@ def generer_gamme(db: Session, description: str, chaine: str | None = None) -> G
         db, [ligne.operation_libelle for ligne in derniere_gamme.lignes]
     )
 
+    if equilibrer_charge:
+        operations = equilibrage_service.equilibrer_charge(db, operations, chaine_cible)
+
+    charge_operateurs = equilibrage_service.calculer_charge_operateurs(operations)
+
     return GammeGenereeOut(
         article_reference_id=article.id,
         article_reference_code=article.code,
@@ -115,4 +122,6 @@ def generer_gamme(db: Session, description: str, chaine: str | None = None) -> G
         score_similarite=meilleur.score,
         operations=operations,
         chaines_suggerees=chaines_suggerees,
+        charge_operateurs=charge_operateurs,
+        equilibrage_applique=equilibrer_charge,
     )

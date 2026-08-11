@@ -11,6 +11,7 @@ function AjoutPage() {
   const [description, setDescription] = useState('')
   const [chaine, setChaine] = useState('')
   const [smv, setSmv] = useState('')
+  const [equilibrerCharge, setEquilibrerCharge] = useState(false)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [resultat, setResultat] = useState<GammeGeneree | null>(null)
@@ -20,7 +21,7 @@ function AjoutPage() {
     setErreur(null)
 
     try {
-      const gamme = await genererGamme(description, chaineChoisie || null)
+      const gamme = await genererGamme(description, chaineChoisie || null, equilibrerCharge)
       setResultat(gamme)
     } catch (error) {
       setErreur(error instanceof ApiError ? error.message : 'Erreur inattendue, reessayez.')
@@ -62,6 +63,15 @@ function AjoutPage() {
           value={smv}
           onChange={(event) => setSmv(event.target.value)}
         />
+        <label className="form-checkbox">
+          <input
+            type="checkbox"
+            className="form-checkbox-input"
+            checked={equilibrerCharge}
+            onChange={(event) => setEquilibrerCharge(event.target.checked)}
+          />
+          Equilibrer la charge entre operateurs (balancement de ligne)
+        </label>
         <button type="submit" className="ajout-submit" disabled={chargement || description.trim().length < 3}>
           {chargement ? 'Generation en cours…' : 'Generer la gamme'}
         </button>

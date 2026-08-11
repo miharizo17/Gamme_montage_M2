@@ -1,11 +1,28 @@
 import { useEffect, useState } from 'react'
-import { ApiError, listerOperateursChaine, modifierLigneGamme } from '../api/gammeApi'
+import {
+  ApiError,
+  exporterGammeExcel,
+  exporterGammePdf,
+  listerOperateursChaine,
+  modifierLigneGamme,
+} from '../api/gammeApi'
 import type { ArticleDetail, GammeLigne } from '../types/article'
 import '../assets/css/ArticleDetailView.css'
 
 interface ArticleDetailViewProps {
   article: ArticleDetail
   onFermer: () => void
+}
+
+function telechargerBlob(blob: Blob, nomFichier: string) {
+  const url = URL.createObjectURL(blob)
+  const lien = document.createElement('a')
+  lien.href = url
+  lien.download = nomFichier
+  document.body.appendChild(lien)
+  lien.click()
+  lien.remove()
+  URL.revokeObjectURL(url)
 }
 
 function formaterDate(dateIso: string | null): string {
@@ -18,6 +35,7 @@ function ArticleDetailView({ article, onFermer }: ArticleDetailViewProps) {
   const [operateursConnus, setOperateursConnus] = useState<string[]>([])
   const [enregistrement, setEnregistrement] = useState<'idle' | 'chargement' | 'succes' | 'erreur'>('idle')
   const [message, setMessage] = useState<string | null>(null)
+  const [exportEnCours, setExportEnCours] = useState<'excel' | 'pdf' | null>(null)
 
   useEffect(() => {
     setLignes(article.lignes_gamme)
@@ -37,6 +55,19 @@ function ArticleDetailView({ article, onFermer }: ArticleDetailViewProps) {
 
   function modifierChamp<K extends keyof GammeLigne>(ligneId: number, champ: K, valeur: GammeLigne[K]) {
     setLignes((precedent) => precedent.map((l) => (l.id === ligneId ? { ...l, [champ]: valeur } : l)))
+  }
+
+  async function handleExporter(format: 'excel' | 'pdf') {
+    setExportEnCours(format)
+    try {
+      const blob = format === 'excel' ? await exporterGammeExcel(article.id) : await exporterGammePdf(article.id)
+      telechargerBlob(blob, `${article.code}.${format === 'excel' ? 'xlsx' : 'pdf'}`)
+    } catch {
+      setMessage("Echec de l'export, reessayez.")
+      setEnregistrement('erreur')
+    } finally {
+      setExportEnCours(null)
+    }
   }
 
   async function handleEnregistrer() {
@@ -70,9 +101,27 @@ function ArticleDetailView({ article, onFermer }: ArticleDetailViewProps) {
           {article.chaine && <span className="article-detail-chaine">Chaine : {article.chaine}</span>}
           <span className="article-detail-date">Enregistree le {formaterDate(article.date_creation)}</span>
         </div>
-        <button type="button" className="article-detail-fermer" onClick={onFermer}>
-          ← Retour a la liste
-        </button>
+        <div className="article-detail-header-actions">
+          <button
+            type="button"
+            className="article-detail-export-btn"
+            onClick={() => handleExporter('excel')}
+            disabled={exportEnCours !== null}
+          >
+            {exportEnCours === 'excel' ? 'Export…' : 'Exporter Excel'}
+          </button>
+          <button
+            type="button"
+            className="article-detail-export-btn"
+            onClick={() => handleExporter('pdf')}
+            disabled={exportEnCours !== null}
+          >
+            {exportEnCours === 'pdf' ? 'Export…' : 'Exporter PDF'}
+          </button>
+          <button type="button" className="article-detail-fermer" onClick={onFermer}>
+            ← Retour a la liste
+          </button>
+        </div>
       </div>
 
       {lignes.length === 0 ? (

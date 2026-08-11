@@ -19,6 +19,12 @@ export interface ChaineSuggeree {
   experience_totale: number
 }
 
+export interface ChargeOperateur {
+  operateur_nom: string
+  nb_operations: number
+  temps_total_secondes: number
+}
+
 export interface GammeGeneree {
   article_reference_id: number
   article_reference_code: string
@@ -27,6 +33,8 @@ export interface GammeGeneree {
   score_similarite: number
   operations: OperationProposee[]
   chaines_suggerees: ChaineSuggeree[]
+  charge_operateurs: ChargeOperateur[]
+  equilibrage_applique: boolean
 }
 
 export interface OperationAEnregistrer {

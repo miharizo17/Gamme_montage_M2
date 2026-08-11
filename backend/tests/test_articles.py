@@ -150,3 +150,58 @@ def test_modifier_ligne_gamme(client):
 def test_modifier_ligne_gamme_inexistante(client):
     response = client.put("/gamme-lignes/999", json={"temps_equilibre": 1})
     assert response.status_code == 404
+
+
+def test_supprimer_article(client):
+    creation = client.post("/articles", json={"code": "T-DEL", "nom": "A supprimer"})
+    article_id = creation.json()["id"]
+
+    response = client.delete(f"/articles/{article_id}")
+    assert response.status_code == 204
+
+    assert client.get(f"/articles/{article_id}").status_code == 404
+
+
+def test_supprimer_article_supprime_sa_gamme_par_cascade(client, db_session):
+    from models import Gamme
+
+    creation = client.post("/articles", json={"code": "T-DEL2", "nom": "A supprimer avec gamme"})
+    article_id = creation.json()["id"]
+    client.post(f"/articles/{article_id}/gamme", json=[{"operation_libelle": "PIQUAGE"}])
+
+    response = client.delete(f"/articles/{article_id}")
+    assert response.status_code == 204
+
+    assert db_session.query(Gamme).filter(Gamme.article_id == article_id).count() == 0
+
+
+def test_supprimer_article_inexistant(client):
+    response = client.delete("/articles/999")
+    assert response.status_code == 404
+
+
+def test_exporter_gamme_excel(client):
+    creation = client.post("/articles", json={"code": "T-EXP1", "nom": "Export Excel"})
+    article_id = creation.json()["id"]
+    client.post(f"/articles/{article_id}/gamme", json=[{"operation_libelle": "PIQUAGE", "temps_equilibre": 30}])
+
+    response = client.get(f"/articles/{article_id}/export/excel")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert response.content[:2] == b"PK"  # signature ZIP (format xlsx)
+
+
+def test_exporter_gamme_pdf(client):
+    creation = client.post("/articles", json={"code": "T-EXP2", "nom": "Export PDF"})
+    article_id = creation.json()["id"]
+    client.post(f"/articles/{article_id}/gamme", json=[{"operation_libelle": "PIQUAGE", "temps_equilibre": 30}])
+
+    response = client.get(f"/articles/{article_id}/export/pdf")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.content[:5] == b"%PDF-"
+
+
+def test_exporter_gamme_inexistante(client):
+    assert client.get("/articles/999/export/excel").status_code == 404
+    assert client.get("/articles/999/export/pdf").status_code == 404

@@ -8,6 +8,11 @@ class GenererGammeIn(BaseModel):
     # Chaine choisie pour la production (prioritaire sur la chaine de la
     # gamme historique retrouvee, qui peut etre differente en pratique).
     chaine: str | None = None
+    # Si True : au lieu d'assigner independamment le meilleur operateur a
+    # chaque operation (risque de sur-charger le plus experimente), on
+    # repartit la charge totale entre les operateurs qualifies de la chaine
+    # (balancement de ligne, heuristique LPT - voir equilibrage_service.py).
+    equilibrer_charge: bool = False
 
 
 class OperationProposeeOut(BaseModel):
@@ -25,6 +30,12 @@ class OperationProposeeOut(BaseModel):
     operateur_meme_chaine: bool | None = None  # None = chaine inconnue pour cette gamme
 
 
+class ChargeOperateurOut(BaseModel):
+    operateur_nom: str
+    nb_operations: int
+    temps_total_secondes: float
+
+
 class GammeGenereeOut(BaseModel):
     article_reference_id: int
     article_reference_code: str
@@ -36,3 +47,7 @@ class GammeGenereeOut(BaseModel):
     # de la chaine choisie/deduite ci-dessus), classees par nombre
     # d'operations couvertes par un operateur experimente.
     chaines_suggerees: list[ChaineSuggereeOut] = []
+    # Repartition du temps total par operateur suggere dans "operations"
+    # (utile pour verifier visuellement que la charge est equilibree).
+    charge_operateurs: list[ChargeOperateurOut] = []
+    equilibrage_applique: bool = False

@@ -11,12 +11,58 @@
   padding: 1rem 2rem;
 }
 
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
 .app-header-date {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.15rem;
   flex-shrink: 0;
+}
+
+.app-header-utilisateur {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--color-border);
+}
+
+.app-header-utilisateur-nom {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.app-header-utilisateur-role {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.app-header-deconnexion {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.app-header-deconnexion:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .app-header-date-full {
@@ -44,5 +90,15 @@
     align-items: flex-start;
     flex-direction: row;
     gap: 0.6rem;
+  }
+
+  .app-header-right {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .app-header-utilisateur {
+    padding-left: 0;
+    border-left: none;
   }
 }

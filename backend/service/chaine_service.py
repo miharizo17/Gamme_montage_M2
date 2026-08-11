@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from models import Article, Competence, Operateur
-from schema import ChaineOut, ChaineSuggereeOut, OperateurChaineOut
+from schema import CelluleCompetenceOut, ChaineOut, ChaineSuggereeOut, MatriceCompetencesOut, OperateurChaineOut
 
 
 def lister_chaines(db: Session) -> list[ChaineOut]:
@@ -84,3 +84,47 @@ def suggerer_chaines(db: Session, operations_libelles: list[str], top_n: int = 3
         )
         for chaine, s in classement[:top_n]
     ]
+
+
+def matrice_competences(
+    db: Session, chaine: str, max_operations: int = 15, max_operateurs: int = 20
+) -> MatriceCompetencesOut:
+    """Heatmap operateurs x operations pour une chaine : limitee aux
+    operations et operateurs les plus significatifs (volume d'occurrences)
+    pour rester lisible - le catalogue d'operations reel comporte des
+    milliers de libelles distincts, un tableau exhaustif serait inexploitable."""
+    competences = (
+        db.query(Competence)
+        .join(Operateur, Competence.operateur_id == Operateur.id)
+        .filter(Competence.chaine == chaine)
+        .filter(Operateur.matricule.is_(None))
+        .all()
+    )
+
+    total_par_operation: dict[str, int] = defaultdict(int)
+    total_par_operateur: dict[str, int] = defaultdict(int)
+    for c in competences:
+        total_par_operation[c.operation_libelle] += c.nb_occurrences
+        total_par_operateur[c.operateur.nom] += c.nb_occurrences
+
+    operations = [
+        op for op, _ in sorted(total_par_operation.items(), key=lambda kv: kv[1], reverse=True)[:max_operations]
+    ]
+    operateurs = [
+        nom for nom, _ in sorted(total_par_operateur.items(), key=lambda kv: kv[1], reverse=True)[:max_operateurs]
+    ]
+    operations_retenues = set(operations)
+    operateurs_retenus = set(operateurs)
+
+    cellules = [
+        CelluleCompetenceOut(
+            operateur_nom=c.operateur.nom,
+            operation_libelle=c.operation_libelle,
+            nb_occurrences=c.nb_occurrences,
+            temps_moyen=c.temps_moyen,
+        )
+        for c in competences
+        if c.operation_libelle in operations_retenues and c.operateur.nom in operateurs_retenus
+    ]
+
+    return MatriceCompetencesOut(chaine=chaine, operateurs=operateurs, operations=operations, cellules=cellules)

@@ -48,7 +48,16 @@
   color: var(--color-muted);
 }
 
-.article-detail-fermer {
+.article-detail-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.article-detail-fermer,
+.article-detail-export-btn {
   flex-shrink: 0;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--color-border);
@@ -57,6 +66,12 @@
   color: var(--color-text);
   font-size: 0.82rem;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.article-detail-export-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .article-detail-vide {

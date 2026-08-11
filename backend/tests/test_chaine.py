@@ -40,3 +40,33 @@ def test_operateurs_par_chaine(client, db_session):
     assert data[0]["nom"] == "Operateur CH7"
     assert data[0]["nb_operations_distinctes"] == 2
     assert data[0]["nb_occurrences_total"] == 8
+
+
+def test_matrice_competences_vide(client):
+    response = client.get("/chaines/ANDRY::CH9/matrice-competences")
+    assert response.status_code == 200
+    data = response.json()
+    assert data == {"chaine": "ANDRY::CH9", "operateurs": [], "operations": [], "cellules": []}
+
+
+def test_matrice_competences(client, db_session):
+    operateur1 = Operateur(nom="Operateur 1", matricule=None, actif=True)
+    operateur2 = Operateur(nom="Operateur 2", matricule=None, actif=True)
+    db_session.add_all([operateur1, operateur2])
+    db_session.commit()
+    db_session.add_all(
+        [
+            Competence(operateur_id=operateur1.id, operation_libelle="POSER ZIP", chaine="ANDRY::CH8", nb_occurrences=10, temps_moyen=30.0),
+            Competence(operateur_id=operateur2.id, operation_libelle="POSER ZIP", chaine="ANDRY::CH8", nb_occurrences=4, temps_moyen=35.0),
+            Competence(operateur_id=operateur2.id, operation_libelle="MONTAGE COL", chaine="ANDRY::CH8", nb_occurrences=6, temps_moyen=20.0),
+        ]
+    )
+    db_session.commit()
+
+    response = client.get("/chaines/ANDRY::CH8/matrice-competences")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["chaine"] == "ANDRY::CH8"
+    assert set(data["operateurs"]) == {"Operateur 1", "Operateur 2"}
+    assert set(data["operations"]) == {"POSER ZIP", "MONTAGE COL"}
+    assert len(data["cellules"]) == 3

@@ -195,3 +195,78 @@ def test_generer_chaine_choisie_prime_sur_celle_de_larticle(client, db_session):
     operation = data["operations"][0]
     assert operation["operateur_suggere"] == "Operateur CH3"
     assert operation["operateur_meme_chaine"] is True
+
+
+def test_generer_charge_operateurs_reflete_lassignation_par_defaut(client, db_session):
+    """Sans equilibrage, charge_operateurs doit refleter que le meme
+    operateur (le plus experimente) rafle toutes les operations."""
+    article = client.post("/articles", json={"code": "M-VESTE10", "nom": "Veste test 10"}).json()
+    client.post(
+        f"/articles/{article['id']}/gamme",
+        json=[
+            {"operation_libelle": "OPERATION LARGE", "temps_equilibre": 100},
+            {"operation_libelle": "OPERATION MOYENNE", "temps_equilibre": 80},
+        ],
+    )
+
+    expert = Operateur(nom="Expert Polyvalent", matricule=None, actif=True)
+    novice = Operateur(nom="Novice Polyvalent", matricule=None, actif=True)
+    db_session.add_all([expert, novice])
+    db_session.commit()
+    db_session.add_all(
+        [
+            Competence(operateur_id=expert.id, operation_libelle="OPERATION LARGE", nb_occurrences=30, temps_moyen=95.0),
+            Competence(operateur_id=expert.id, operation_libelle="OPERATION MOYENNE", nb_occurrences=30, temps_moyen=75.0),
+            Competence(operateur_id=novice.id, operation_libelle="OPERATION LARGE", nb_occurrences=5, temps_moyen=110.0),
+            Competence(operateur_id=novice.id, operation_libelle="OPERATION MOYENNE", nb_occurrences=5, temps_moyen=90.0),
+        ]
+    )
+    db_session.commit()
+
+    response = client.post("/gammes/generer", json={"description": "veste avec zip et col"})
+    data = response.json()
+    assert data["equilibrage_applique"] is False
+    assert all(op["operateur_suggere"] == "Expert Polyvalent" for op in data["operations"])
+    assert data["charge_operateurs"] == [
+        {"operateur_nom": "Expert Polyvalent", "nb_operations": 2, "temps_total_secondes": 180.0}
+    ]
+
+
+def test_generer_equilibrer_charge_repartit_entre_operateurs(client, db_session):
+    """Avec equilibrer_charge=True, la charge doit etre lissee entre les
+    deux operateurs qualifies plutot que concentree sur le plus experimente."""
+    article = client.post("/articles", json={"code": "M-VESTE11", "nom": "Veste test 11"}).json()
+    client.post(
+        f"/articles/{article['id']}/gamme",
+        json=[
+            {"operation_libelle": "OPERATION LARGE", "temps_equilibre": 100},
+            {"operation_libelle": "OPERATION MOYENNE", "temps_equilibre": 80},
+        ],
+    )
+
+    expert = Operateur(nom="Expert Polyvalent", matricule=None, actif=True)
+    novice = Operateur(nom="Novice Polyvalent", matricule=None, actif=True)
+    db_session.add_all([expert, novice])
+    db_session.commit()
+    db_session.add_all(
+        [
+            Competence(operateur_id=expert.id, operation_libelle="OPERATION LARGE", nb_occurrences=30, temps_moyen=95.0),
+            Competence(operateur_id=expert.id, operation_libelle="OPERATION MOYENNE", nb_occurrences=30, temps_moyen=75.0),
+            Competence(operateur_id=novice.id, operation_libelle="OPERATION LARGE", nb_occurrences=5, temps_moyen=110.0),
+            Competence(operateur_id=novice.id, operation_libelle="OPERATION MOYENNE", nb_occurrences=5, temps_moyen=90.0),
+        ]
+    )
+    db_session.commit()
+
+    response = client.post(
+        "/gammes/generer", json={"description": "veste avec zip et col", "equilibrer_charge": True}
+    )
+    data = response.json()
+    assert data["equilibrage_applique"] is True
+
+    operateurs_assignes = {op["operation_libelle"]: op["operateur_suggere"] for op in data["operations"]}
+    assert operateurs_assignes["OPERATION LARGE"] == "Expert Polyvalent"
+    assert operateurs_assignes["OPERATION MOYENNE"] == "Novice Polyvalent"
+
+    charges = {c["operateur_nom"]: c["temps_total_secondes"] for c in data["charge_operateurs"]}
+    assert charges == {"Expert Polyvalent": 100.0, "Novice Polyvalent": 80.0}

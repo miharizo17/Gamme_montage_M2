@@ -17,6 +17,31 @@ function sommeSecondes(operations: OperationProposee[]): number {
   return operations.reduce((total, op) => total + (op.temps_estime ?? 0), 0)
 }
 
+interface ChargeCalculee {
+  nom: string
+  nbOperations: number
+  tempsTotal: number
+}
+
+// Recalculee localement (plutot que d'utiliser gamme.charge_operateurs tel
+// quel) pour rester a jour au fil des corrections manuelles de l'agent de
+// methode dans le tableau.
+function chargeParOperateur(operations: OperationProposee[]): ChargeCalculee[] {
+  const parOperateur = new Map<string, ChargeCalculee>()
+  for (const op of operations) {
+    if (!op.operateur_suggere) continue
+    const entree = parOperateur.get(op.operateur_suggere) ?? {
+      nom: op.operateur_suggere,
+      nbOperations: 0,
+      tempsTotal: 0,
+    }
+    entree.nbOperations += 1
+    entree.tempsTotal += op.temps_estime ?? 0
+    parOperateur.set(op.operateur_suggere, entree)
+  }
+  return [...parOperateur.values()].sort((a, b) => b.tempsTotal - a.tempsTotal)
+}
+
 function repartirOperations(operations: OperationProposee[], cibleMinutes: number): OperationProposee[] {
   const somme = sommeSecondes(operations)
   if (!cibleMinutes || cibleMinutes <= 0 || somme <= 0) return operations
@@ -58,6 +83,7 @@ function GammeResultat({ gamme, smvInitiale, onChoisirChaine }: GammeResultatPro
   // changement (edition manuelle ou repartition).
   const sommeSecondesActuelle = sommeSecondes(operations)
   const smvActuelleMinutes = sommeSecondesActuelle / 60
+  const charges = chargeParOperateur(operations)
 
   useEffect(() => {
     if (smvInitiale && smvInitiale > 0) {
@@ -180,6 +206,25 @@ function GammeResultat({ gamme, smvInitiale, onChoisirChaine }: GammeResultatPro
           </div>
         </div>
       </div>
+
+      {charges.length > 0 && (
+        <div className="gamme-resultat-charges">
+          <span className="gamme-resultat-label">
+            Charge par operateur{gamme.equilibrage_applique ? ' (equilibree)' : ''}
+          </span>
+          <ul>
+            {charges.map((charge) => (
+              <li key={charge.nom}>
+                <span>{charge.nom}</span>
+                <span>
+                  {charge.nbOperations} operation{charge.nbOperations > 1 ? 's' : ''} —{' '}
+                  {(charge.tempsTotal / 60).toFixed(1)} min
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {gamme.chaines_suggerees.length > 0 && (
         <div className="gamme-resultat-suggestions">

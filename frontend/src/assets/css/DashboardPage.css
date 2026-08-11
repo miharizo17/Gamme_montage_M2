@@ -1,0 +1,101 @@
+.dashboard-erreur {
+  color: #b3261e;
+}
+
+.dashboard-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.dashboard-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.dashboard-carte-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-muted);
+}
+
+.dashboard-carte-valeur {
+  font-size: 1.6rem;
+  color: var(--color-accent);
+}
+
+.dashboard-graphiques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.dashboard-graphique {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.dashboard-graphique h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.dashboard-vide {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.dashboard-barres {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dashboard-barres li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.dashboard-barre-label {
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-barre-piste {
+  display: block;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.dashboard-barre-remplissage {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 999px;
+}
+
+.dashboard-barre-valeur {
+  text-align: right;
+  color: var(--color-text);
+  font-weight: 600;
+}

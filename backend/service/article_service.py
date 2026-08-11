@@ -38,6 +38,14 @@ def vers_article_detail(article: Article, gamme: Gamme | None) -> ArticleDetailO
     )
 
 
+SEUIL_SIMILARITE_TRIGRAMME = 0.15
+
+
+def _est_postgres(db: Session) -> bool:
+    bind = db.get_bind()
+    return bind is not None and bind.dialect.name == "postgresql"
+
+
 def lister_articles(
     db: Session, skip: int = 0, limit: int = 20, q: str | None = None, chaine: str | None = None
 ) -> ArticleListOut:
@@ -51,14 +59,24 @@ def lister_articles(
     filtre = db.query(Article, dates_par_article.c.date_creation).outerjoin(
         dates_par_article, dates_par_article.c.article_id == Article.id
     )
+
+    similarite = None
     if q:
         motif = f"%{q}%"
-        filtre = filtre.filter((Article.nom.ilike(motif)) | (Article.code.ilike(motif)))
+        correspond_ilike = (Article.nom.ilike(motif)) | (Article.code.ilike(motif))
+        if _est_postgres(db):
+            # pg_trgm : tolere les fautes de frappe/variantes que ILIKE seul rate
+            # (ex: "vest femme" retrouve "veste femme").
+            similarite = func.greatest(func.similarity(Article.nom, q), func.similarity(Article.code, q))
+            filtre = filtre.filter(correspond_ilike | (similarite > SEUIL_SIMILARITE_TRIGRAMME))
+        else:
+            filtre = filtre.filter(correspond_ilike)
     if chaine:
         filtre = filtre.filter(Article.chaine == chaine)
 
     total = filtre.with_entities(func.count(Article.id)).scalar()
-    lignes = filtre.order_by(Article.id).offset(skip).limit(limit).all()
+    tri = filtre.order_by(similarite.desc(), Article.id) if similarite is not None else filtre.order_by(Article.id)
+    lignes = tri.offset(skip).limit(limit).all()
 
     items = []
     for article, date_creation in lignes:
@@ -108,3 +126,15 @@ def modifier_article(db: Session, article_id: int, data: ArticleUpdate) -> Artic
     db.commit()
     db.refresh(article)
     return ArticleOut.model_validate(article)
+
+
+def supprimer_article(db: Session, article_id: int) -> bool:
+    """Supprime l'article et, par cascade (ON DELETE CASCADE), ses gammes et
+    leurs lignes. Ne touche pas aux operateurs ni a leur matrice de
+    competences (l'historique de competence reste valable independamment)."""
+    article = db.query(Article).filter(Article.id == article_id).first()
+    if article is None:
+        return False
+    db.delete(article)
+    db.commit()
+    return True

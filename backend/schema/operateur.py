@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OperateurOut(BaseModel):
@@ -15,6 +15,17 @@ class OperateurListOut(BaseModel):
     skip: int
     limit: int
     items: list[OperateurOut]
+
+
+class OperateurCreate(BaseModel):
+    nom: str = Field(min_length=1, max_length=120)
+    matricule: str | None = Field(default=None, max_length=30)
+
+
+class OperateurUpdate(BaseModel):
+    nom: str | None = Field(default=None, min_length=1, max_length=120)
+    matricule: str | None = None
+    actif: bool | None = None
 
 
 class CompetenceOut(BaseModel):

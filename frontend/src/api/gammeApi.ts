@@ -1,45 +1,16 @@
+import { get, getBlob, post, put } from './apiClient'
 import type { ArticleDetail, ArticleListe, GammeLigne } from '../types/article'
-import type { Chaine, OperateurChaine } from '../types/chaine'
+import type { Chaine, MatriceCompetences, OperateurChaine } from '../types/chaine'
 import type { EnregistrerGammePayload, GammeGeneree } from '../types/gamme'
 
-const API_BASE = '/api/gamme-montage'
+export { ApiError } from './apiClient'
 
-export class ApiError extends Error {}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null)
-    const message = typeof payload?.detail === 'string' ? payload.detail : `Erreur ${response.status}`
-    throw new ApiError(message)
-  }
-  return response.json() as Promise<T>
-}
-
-async function get<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`)
-  return handleResponse<T>(response)
-}
-
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  return handleResponse<T>(response)
-}
-
-async function put<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  return handleResponse<T>(response)
-}
-
-export function genererGamme(description: string, chaine: string | null): Promise<GammeGeneree> {
-  return post<GammeGeneree>('/gammes/generer', { description, chaine })
+export function genererGamme(
+  description: string,
+  chaine: string | null,
+  equilibrerCharge = false,
+): Promise<GammeGeneree> {
+  return post<GammeGeneree>('/gammes/generer', { description, chaine, equilibrer_charge: equilibrerCharge })
 }
 
 export function enregistrerGamme(payload: EnregistrerGammePayload): Promise<ArticleDetail> {
@@ -65,6 +36,10 @@ export function listerOperateursChaine(chaine: string): Promise<OperateurChaine[
   return get<OperateurChaine[]>(`/chaines/${encodeURIComponent(chaine)}/operateurs`)
 }
 
+export function obtenirMatriceCompetences(chaine: string): Promise<MatriceCompetences> {
+  return get<MatriceCompetences>(`/chaines/${encodeURIComponent(chaine)}/matrice-competences`)
+}
+
 export interface ListerArticlesOptions {
   skip?: number
   limit?: number
@@ -83,4 +58,12 @@ export function listerArticles(options: ListerArticlesOptions = {}): Promise<Art
 
 export function obtenirArticle(articleId: number): Promise<ArticleDetail> {
   return get<ArticleDetail>(`/articles/${articleId}`)
+}
+
+export function exporterGammeExcel(articleId: number): Promise<Blob> {
+  return getBlob(`/articles/${articleId}/export/excel`)
+}
+
+export function exporterGammePdf(articleId: number): Promise<Blob> {
+  return getBlob(`/articles/${articleId}/export/pdf`)
 }

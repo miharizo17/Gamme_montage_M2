@@ -49,3 +49,42 @@ def test_competences_operateur_triees_par_occurrences(client, db_session):
     # La plus frequente (PIQUAGE, 8 occurrences) doit arriver en premier.
     assert data[0]["operation_libelle"] == "PIQUAGE"
     assert data[1]["operation_libelle"] == "OURLET"
+
+
+def test_creer_operateur(client):
+    response = client.post("/operateurs", json={"nom": "Nouvel Operateur", "matricule": "OP-99"})
+    assert response.status_code == 201
+    data = response.json()
+    assert data["nom"] == "Nouvel Operateur"
+    assert data["matricule"] == "OP-99"
+    assert data["actif"] is True
+
+
+def test_modifier_operateur(client, db_session):
+    operateur = _creer_operateur(db_session)
+
+    response = client.put(f"/operateurs/{operateur.id}", json={"nom": "Nom Corrige", "actif": False})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nom"] == "Nom Corrige"
+    assert data["actif"] is False
+
+
+def test_modifier_operateur_inexistant(client):
+    response = client.put("/operateurs/999", json={"nom": "Peu importe"})
+    assert response.status_code == 404
+
+
+def test_supprimer_operateur(client, db_session):
+    operateur = _creer_operateur(db_session)
+
+    response = client.delete(f"/operateurs/{operateur.id}")
+    assert response.status_code == 204
+
+    response = client.get("/operateurs")
+    assert response.json()["total"] == 0
+
+
+def test_supprimer_operateur_inexistant(client):
+    response = client.delete("/operateurs/999")
+    assert response.status_code == 404

@@ -13,7 +13,9 @@ from sqlalchemy.pool import StaticPool
 import models  # noqa: F401  (enregistre les modeles sur Base_chebdo.metadata)
 import service.matching_service as matching_service
 from database import Base_chebdo
-from main import app, get_db
+from deps import get_current_user, get_db
+from main import app
+from models import Utilisateur
 
 engine = create_engine(
     "sqlite:///:memory:",
@@ -34,8 +36,35 @@ def db_session():
         Base_chebdo.metadata.drop_all(bind=engine)
 
 
+UTILISATEUR_TEST = Utilisateur(
+    id=1, nom_utilisateur="test-admin", mot_de_passe_hash="x", role="administrateur", actif=True
+)
+
+
 @pytest.fixture()
 def client(db_session):
+    """Client authentifie par defaut (role administrateur) : la grande
+    majorite des tests portent sur la logique metier, pas sur l'auth
+    elle-meme, donc on evite de repeter un login JWT dans chaque test."""
+
+    def override_get_db():
+        yield db_session
+
+    def override_get_current_user():
+        return UTILISATEUR_TEST
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def client_sans_auth(db_session):
+    """Client sans override d'authentification, pour tester le flux JWT
+    reel (login, token invalide, controle de role) dans test_auth.py."""
+
     def override_get_db():
         yield db_session
 

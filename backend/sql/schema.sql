@@ -8,6 +8,11 @@
 -- =============================================================
 
 
+-- pg_trgm : recherche floue/tolerante aux fautes de frappe (similarite de
+-- trigrammes) utilisee par GET /articles?q=... en complement du ILIKE.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+
 -- -------------------------------------------------------------
 -- TABLES
 -- -------------------------------------------------------------
@@ -19,6 +24,15 @@ CREATE TABLE IF NOT EXISTS article (
     description TEXT,                            -- description du prototype (entree du moteur NLP)
     source      VARCHAR(300),                     -- dossier/fichier d'origine, ou "donnees de test"
     chaine      VARCHAR(100)                      -- chaine/ligne de production extraite du chemin source
+);
+
+CREATE TABLE IF NOT EXISTS utilisateur (
+    id                 SERIAL PRIMARY KEY,
+    nom_utilisateur    VARCHAR(80) NOT NULL UNIQUE,
+    mot_de_passe_hash  VARCHAR(200) NOT NULL,
+    role               VARCHAR(30) NOT NULL DEFAULT 'agent_methode',  -- 'agent_methode' | 'administrateur'
+    actif              BOOLEAN NOT NULL DEFAULT TRUE,
+    date_creation      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS operateur (
@@ -64,6 +78,11 @@ CREATE INDEX IF NOT EXISTS ix_gamme_article_id        ON gamme (article_id);
 CREATE INDEX IF NOT EXISTS ix_gamme_ligne_gamme_id     ON gamme_ligne (gamme_id);
 CREATE INDEX IF NOT EXISTS ix_gamme_ligne_operateur_id ON gamme_ligne (operateur_id);
 CREATE INDEX IF NOT EXISTS ix_competence_operateur_id  ON competence (operateur_id);
+
+-- Index trigrammes (pg_trgm) : accelerent la fois le ILIKE '%...%' et
+-- l'operateur de similarite '%'/similarity() utilises par la recherche.
+CREATE INDEX IF NOT EXISTS ix_article_nom_trgm  ON article USING gin (nom gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS ix_article_code_trgm ON article USING gin (code gin_trgm_ops);
 
 
 -- =============================================================
