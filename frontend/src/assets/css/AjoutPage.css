@@ -1,0 +1,29 @@
+.ajout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 640px;
+}
+
+.ajout-submit {
+  align-self: flex-start;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ajout-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ajout-erreur {
+  margin-top: 1rem;
+  color: #b3261e;
+  font-size: 0.9rem;
+}

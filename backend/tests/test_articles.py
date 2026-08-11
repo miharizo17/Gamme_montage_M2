@@ -29,6 +29,30 @@ def test_pagination_articles(client):
     assert data["items"][0]["code"] == "T-P3"
 
 
+def test_recherche_articles_par_nom(client):
+    client.post("/articles", json={"code": "T-VESTE", "nom": "Veste zippee"})
+    client.post("/articles", json={"code": "T-PANTALON", "nom": "Pantalon droit"})
+
+    response = client.get("/articles?q=veste")
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["code"] == "T-VESTE"
+
+
+def test_filtrer_articles_par_chaine(client, db_session):
+    from models import Article
+
+    a1 = client.post("/articles", json={"code": "T-CH7", "nom": "Article chaine 7"}).json()
+    client.post("/articles", json={"code": "T-CH2", "nom": "Article chaine 2"})
+    db_session.get(Article, a1["id"]).chaine = "ANDRY::CH7"
+    db_session.commit()
+
+    response = client.get("/articles?chaine=ANDRY::CH7")
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["code"] == "T-CH7"
+
+
 def test_creer_article_code_duplique(client):
     payload = {"code": "T-002", "nom": "Article"}
     client.post("/articles", json=payload)
@@ -84,6 +108,27 @@ def test_creer_gamme_et_obtenir_detail(client):
 def test_creer_gamme_article_inexistant(client):
     response = client.post("/articles/999/gamme", json=[])
     assert response.status_code == 404
+
+
+def test_date_creation_visible_dans_liste_et_detail(client):
+    creation = client.post("/articles", json={"code": "T-DATE", "nom": "Article date"})
+    article_id = creation.json()["id"]
+    client.post(f"/articles/{article_id}/gamme", json=[{"operation_libelle": "PIQUAGE"}])
+
+    detail = client.get(f"/articles/{article_id}").json()
+    assert detail["date_creation"] is not None
+
+    liste = client.get("/articles").json()
+    article_liste = next(a for a in liste["items"] if a["id"] == article_id)
+    assert article_liste["date_creation"] is not None
+
+
+def test_date_creation_absente_sans_gamme(client):
+    creation = client.post("/articles", json={"code": "T-SANS-GAMME", "nom": "Article sans gamme"})
+    article_id = creation.json()["id"]
+
+    detail = client.get(f"/articles/{article_id}").json()
+    assert detail["date_creation"] is None
 
 
 def test_modifier_ligne_gamme(client):

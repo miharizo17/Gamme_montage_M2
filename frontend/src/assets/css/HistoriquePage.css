@@ -1,0 +1,90 @@
+.historique-filtres {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 640px;
+}
+
+.historique-filtres .form-input {
+  margin: 0;
+}
+
+.historique-select-chaine {
+  max-width: 260px;
+}
+
+.historique-erreur {
+  color: #b3261e;
+  font-size: 0.9rem;
+}
+
+.historique-info {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  padding: 0.75rem 0;
+}
+
+.historique-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.historique-table th,
+.historique-table td {
+  padding: 0.55rem 1.1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.historique-table th {
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.historique-table tbody tr {
+  cursor: pointer;
+}
+
+.historique-table tbody tr:hover {
+  background: var(--color-surface);
+}
+
+.historique-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.historique-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.historique-pagination-boutons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.historique-pagination-boutons button {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.historique-pagination-boutons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

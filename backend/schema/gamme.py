@@ -17,6 +17,10 @@ class GammeLigneCreate(BaseModel):
     target: float | None = None
     machine: str | None = None
     operateur_id: int | None = None
+    # Alternative a operateur_id : resout (ou cree) l'operateur par son nom.
+    # Utilise quand l'appelant ne connait que le nom (ex: interface de
+    # generation, qui manipule des noms suggeres/corriges, pas des id).
+    operateur_nom: str | None = None
 
 
 class GammeLigneUpdate(BaseModel):
@@ -25,3 +29,4 @@ class GammeLigneUpdate(BaseModel):
     target: float | None = None
     machine: str | None = None
     operateur_id: int | None = None
+    operateur_nom: str | None = None

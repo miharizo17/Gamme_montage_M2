@@ -1,8 +1,11 @@
 """Reconstruit la table Competence a partir de l'historique REEL des
-GammeLigne : pour chaque (operateur, operation), on compte combien de
-fois cet operateur a deja realise cette operation et le temps moyen
-observe. C'est la matrice de competences qui alimentera l'affectation
-operateur du moteur IA (croisement Skill Matrix).
+GammeLigne : pour chaque (operateur, operation, chaine), on compte combien
+de fois cet operateur a deja realise cette operation SUR CETTE CHAINE et le
+temps moyen observe. C'est la matrice de competences qui alimentera
+l'affectation operateur du moteur IA (croisement Skill Matrix).
+
+La chaine fait partie de la cle : une chaine a ses propres operateurs, on
+ne doit jamais suggerer un operateur d'une autre chaine.
 
 Ignore volontairement les gammes DEMO-* (fictives) : la matrice de
 competences ne doit refleter que de vraies observations.
@@ -26,7 +29,7 @@ from models import Article, Competence, Gamme, GammeLigne  # noqa: E402
 
 def reconstruire(db):
     lignes = (
-        db.query(GammeLigne)
+        db.query(GammeLigne, Article.chaine)
         .join(Gamme, GammeLigne.gamme_id == Gamme.id)
         .join(Article, Gamme.article_id == Article.id)
         .filter(~Article.code.like("DEMO-%"))
@@ -35,25 +38,26 @@ def reconstruire(db):
     )
 
     stats = defaultdict(lambda: {"nb": 0, "somme_temps": 0.0, "nb_temps": 0})
-    for ligne in lignes:
-        cle = (ligne.operateur_id, ligne.operation_libelle)
+    for ligne, chaine in lignes:
+        cle = (ligne.operateur_id, ligne.operation_libelle, chaine)
         stats[cle]["nb"] += 1
         if ligne.temps_equilibre is not None:
             stats[cle]["somme_temps"] += ligne.temps_equilibre
             stats[cle]["nb_temps"] += 1
 
-    ids_operateurs_reels = {operateur_id for (operateur_id, _op) in stats}
+    ids_operateurs_reels = {operateur_id for (operateur_id, _op, _chaine) in stats}
     if ids_operateurs_reels:
         db.query(Competence).filter(Competence.operateur_id.in_(ids_operateurs_reels)).delete(
             synchronize_session=False
         )
 
-    for (operateur_id, operation_libelle), s in stats.items():
+    for (operateur_id, operation_libelle, chaine), s in stats.items():
         temps_moyen = round(s["somme_temps"] / s["nb_temps"], 1) if s["nb_temps"] else None
         db.add(
             Competence(
                 operateur_id=operateur_id,
                 operation_libelle=operation_libelle,
+                chaine=chaine,
                 nb_occurrences=s["nb"],
                 temps_moyen=temps_moyen,
             )

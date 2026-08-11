@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS article (
     code        VARCHAR(150) NOT NULL UNIQUE,   -- reference du prototype (ex: DEMO-001, ou chemin relatif nettoye pour les imports reels)
     nom         VARCHAR(200) NOT NULL,
     description TEXT,                            -- description du prototype (entree du moteur NLP)
-    source      VARCHAR(300)                      -- dossier/fichier d'origine, ou "donnees de test"
+    source      VARCHAR(300),                     -- dossier/fichier d'origine, ou "donnees de test"
+    chaine      VARCHAR(100)                      -- chaine/ligne de production extraite du chemin source
 );
 
 CREATE TABLE IF NOT EXISTS operateur (
@@ -48,9 +49,10 @@ CREATE TABLE IF NOT EXISTS competence (
     id                 SERIAL PRIMARY KEY,
     operateur_id       INTEGER NOT NULL REFERENCES operateur (id) ON DELETE CASCADE,
     operation_libelle  VARCHAR(200) NOT NULL,
+    chaine             VARCHAR(100),               -- une chaine a ses propres operateurs
     nb_occurrences     INTEGER NOT NULL DEFAULT 0,
     temps_moyen        FLOAT,
-    CONSTRAINT uq_competence_operateur_operation UNIQUE (operateur_id, operation_libelle)
+    CONSTRAINT uq_competence_operateur_operation_chaine UNIQUE (operateur_id, operation_libelle, chaine)
 );
 
 
@@ -118,6 +120,7 @@ SELECT
     o.nom               AS operateur_nom,
     o.matricule,
     c.operation_libelle,
+    c.chaine,
     c.nb_occurrences,
     c.temps_moyen
 FROM competence c

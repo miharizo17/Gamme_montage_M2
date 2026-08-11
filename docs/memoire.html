@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Génération intelligente de gammes de montage assistée par IA — Mémoire MBDS</title>
+<style>
+  :root {
+    --marge: 2.2cm;
+    --couleur-texte: #1a1a1a;
+    --couleur-muted: #555;
+    --couleur-accent: #7a3b2e;
+    --couleur-bordure: #ddd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Georgia", "Times New Roman", serif;
+    color: var(--couleur-texte);
+    background: #f4f1ec;
+    margin: 0;
+    line-height: 1.55;
+  }
+  .page {
+    max-width: 21cm;
+    margin: 2rem auto;
+    background: #ffffff;
+    padding: var(--marge);
+    box-shadow: 0 0 12px rgba(0,0,0,0.12);
+  }
+  .confidentiel {
+    font-size: 0.75rem;
+    color: var(--couleur-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--couleur-bordure);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1.5rem;
+  }
+  .placeholder {
+    background: #fff3cd;
+    color: #7a5c00;
+    padding: 0.05rem 0.35rem;
+    border-radius: 3px;
+    font-style: italic;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 0.92em;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #2a2a2a;
+    line-height: 1.25;
+  }
+  h1 {
+    font-size: 1.55rem;
+    border-bottom: 2px solid var(--couleur-accent);
+    padding-bottom: 0.4rem;
+    margin-top: 3rem;
+  }
+  h2 { font-size: 1.2rem; margin-top: 2rem; color: var(--couleur-accent); }
+  h3 { font-size: 1.02rem; margin-top: 1.5rem; }
+  h4 { font-size: 0.95rem; margin-top: 1.2rem; font-style: italic; }
+  p { text-align: justify; margin: 0.7rem 0; }
+  ul, ol { text-align: justify; }
+  code, pre {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.82rem;
+  }
+  pre {
+    background: #f6f2ea;
+    border: 1px solid var(--couleur-bordure);
+    border-left: 4px solid var(--couleur-accent);
+    padding: 0.85rem 1rem;
+    overflow-x: auto;
+    border-radius: 4px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.88rem;
+  }
+  th, td {
+    border: 1px solid var(--couleur-bordure);
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f0e9df; font-family: "Segoe UI", sans-serif; }
+  caption, .legende {
+    font-size: 0.82rem;
+    color: var(--couleur-muted);
+    text-align: left;
+    margin-top: 0.3rem;
+    font-style: italic;
+  }
+  .page-garde {
+    text-align: center;
+    padding-top: 4rem;
+  }
+  .page-garde h1 {
+    border: none;
+    font-size: 1.9rem;
+    margin: 2.5rem 0 0.5rem;
+    color: var(--couleur-accent);
+  }
+  .page-garde .sous-titre {
+    font-size: 1.05rem;
+    color: var(--couleur-muted);
+    margin-bottom: 3rem;
+  }
+  .page-garde .par {
+    font-size: 1.1rem;
+    margin-top: 3rem;
+  }
+  .page-garde .master {
+    margin-top: 2.5rem;
+    font-size: 1rem;
+  }
+  .page-garde .jury {
+    margin-top: 3rem;
+    text-align: left;
+    display: inline-block;
+    font-size: 0.92rem;
+  }
+  nav.sommaire {
+    background: #faf7f2;
+    border: 1px solid var(--couleur-bordure);
+    border-radius: 6px;
+    padding: 1.2rem 1.8rem;
+  }
+  nav.sommaire ol { padding-left: 1.4rem; }
+  nav.sommaire li { margin: 0.3rem 0; }
+  nav.sommaire a { color: var(--couleur-texte); text-decoration: none; }
+  nav.sommaire a:hover { color: var(--couleur-accent); text-decoration: underline; }
+  nav.sommaire .niveau2 { list-style: none; padding-left: 1.2rem; font-size: 0.95em; }
+  .encadre {
+    background: #faf7f2;
+    border-left: 4px solid var(--couleur-accent);
+    padding: 0.8rem 1.1rem;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  .cas-utilisation {
+    border: 1px solid var(--couleur-bordure);
+    border-radius: 6px;
+    padding: 0.9rem 1.2rem;
+    margin: 1rem 0;
+    background: #fdfcfa;
+  }
+  .cas-utilisation dt { font-weight: bold; margin-top: 0.5rem; }
+  .cas-utilisation dd { margin: 0.15rem 0 0.15rem 0; }
+  footer.numero-page {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--couleur-muted);
+    margin-top: 3rem;
+    border-top: 1px solid var(--couleur-bordure);
+    padding-top: 0.5rem;
+  }
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; max-width: none; }
+    h1 { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- PAGE DE GARDE                                                   -->
+<!-- ============================================================= -->
+<div class="page page-garde">
+  <div class="confidentiel" style="text-align:left">Confidentiel — Usage académique</div>
+  <p style="margin-top:4rem">Mémoire présenté</p>
+  <h1>Génération intelligente de gammes de montage à partir de la description d'un prototype</h1>
+  <p class="sous-titre">Une approche combinant NLP (similarité textuelle) et Machine Learning pour l'industrie de la confection textile</p>
+
+  <p class="par">par<br><strong>ANDRIANIONY Kanto</strong></p>
+
+  <p class="master">
+    MASTER de SCIENCES, TECHNOLOGIES, SANTÉ, mention INFORMATIQUE<br>
+    Spécialité MOBIQUITÉ, BIG DATA ET INTÉGRATION DE SYSTÈMES (MBDS)<br>
+    <span class="placeholder">[Mois, Année à préciser]</span>
+  </p>
+
+  <div class="jury">
+    <p><strong>Jury :</strong></p>
+    <p>
+      <span class="placeholder">[Nom, président]</span><br>
+      <span class="placeholder">[Nom, examinateur]</span><br>
+      <span class="placeholder">[Nom, encadreur professionnel — LOI Confection]</span>
+    </p>
+  </div>
+
+  <p style="margin-top:3rem">© ANDRIANIONY Kanto, 2026</p>
+</div>
+
+<!-- ============================================================= -->
+<!-- RESUME / ABSTRACT                                               -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 style="margin-top:0">Résumé</h1>
+  <p>
+    Ce rapport présente le projet <em>« Génération intelligente de gammes de montage »</em>, réalisé dans le
+    cadre du Master MBDS en collaboration avec l'entreprise LOI Confection, spécialisée dans la production
+    textile (chaîne-et-trame, maille et accessoires).
+  </p>
+  <p>
+    L'objectif était de concevoir et développer une application capable de générer automatiquement une gamme
+    de montage cohérente — la liste ordonnée des opérations nécessaires à l'assemblage d'un vêtement, avec
+    leurs temps standard et les opérateurs compétents — à partir d'une simple description textuelle d'un
+    nouveau prototype, en s'appuyant sur l'historique réel de production de l'entreprise et sur la matrice de
+    compétences des opérateurs par chaîne.
+  </p>
+  <p>
+    Le travail a couvert l'ensemble du cycle de développement : exploration et nettoyage de plus de 6500
+    fichiers Excel historiques hétérogènes (« BASE MANING »), conception d'un modèle de données relationnel,
+    construction d'un pipeline d'import robuste, développement d'un moteur de recherche par similarité
+    textuelle (NLP, TF-IDF et similarité cosinus), croisement avec une matrice de compétences reconstruite par
+    chaîne de production, entraînement d'un modèle de Machine Learning (Random Forest) prédisant le temps
+    standard d'une opération lorsqu'aucune donnée historique n'est disponible, puis développement d'une API
+    REST (FastAPI/PostgreSQL) et d'une interface web (React/TypeScript) permettant de générer, corriger,
+    chiffrer en SMV, enregistrer et consulter l'historique des gammes produites.
+  </p>
+  <p>
+    Les résultats obtenus montrent un pipeline complet et fonctionnel : import de 5989 gammes réelles et de
+    plus de 180 000 lignes d'opérations, un moteur de suggestion d'opérateur tenant compte de la chaîne de
+    production, une recommandation de la chaîne la mieux équipée pour une production donnée, un modèle
+    prédictif entraîné sur 115 800 temps mesurés réels (erreur moyenne de 24,2 secondes, contre 27,2 à 30,3
+    secondes pour une simple moyenne historique), ainsi qu'une interface permettant à l'agent de méthode de
+    corriger et sauvegarder les gammes générées. La solution constitue un outil d'aide à la décision destiné
+    aux agents de méthode de l'entreprise.
+  </p>
+  <p><strong>Mots clés :</strong> Gamme de montage, NLP, Machine Learning, TF-IDF, FastAPI, React, PostgreSQL, Production textile, SMV.</p>
+
+  <h1>Abstract</h1>
+  <p>
+    This report presents the project <em>"Intelligent Generation of Garment Assembly Routings"</em>, carried
+    out as part of the MBDS Master's program in collaboration with LOI Confection, a textile production
+    company.
+  </p>
+  <p>
+    The objective was to design and develop an application capable of automatically generating a coherent
+    assembly routing (gamme de montage) — the ordered list of operations required to assemble a garment,
+    with their standard times and competent operators — from a simple free-text description of a new
+    prototype, leveraging the company's real production history and its operator skills matrix per production
+    line.
+  </p>
+  <p>
+    The work covered the entire development cycle: exploration and cleaning of more than 6500 heterogeneous
+    historical Excel files ("BASE MANING"), design of a relational data model, construction of a robust import
+    pipeline, development of a text-similarity search engine (NLP, TF-IDF and cosine similarity), cross-
+    referencing with a skills matrix rebuilt per production line, training of a Machine Learning model (Random
+    Forest) predicting an operation's standard time when no historical data is available, and development of a
+    REST API (FastAPI/PostgreSQL) and a web interface (React/TypeScript) allowing users to generate, correct,
+    convert to SMV, save and browse the history of produced routings.
+  </p>
+  <p>
+    The obtained results show a complete and functional pipeline: import of 5989 real routings and over
+    180,000 operation lines, an operator-suggestion engine that respects production-line boundaries, a
+    recommendation of the best-equipped line for a given production, a predictive model trained on 115,800
+    real measured times (mean error of 24.2 seconds, versus 27.2-30.3 seconds for a naive historical-average
+    baseline), and an interface allowing the methods engineer to correct and save generated routings. The
+    solution is a decision-support tool intended for the company's methods engineers.
+  </p>
+  <p><strong>Keywords:</strong> Assembly routing, NLP, Machine Learning, TF-IDF, FastAPI, React, PostgreSQL, Textile production, SMV.</p>
+</div>
+
+<!-- ============================================================= -->
+<!-- TABLE DES MATIERES                                              -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 style="margin-top:0">Table des matières</h1>
+  <nav class="sommaire">
+    <ol>
+      <li><a href="#glossaire">Glossaire</a></li>
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#c1">Présentation du stage</a>
+        <ol class="niveau2">
+          <li><a href="#c1-1">Présentation de l'entreprise</a></li>
+          <li><a href="#c1-2">Présentation du sujet et objectifs du projet</a></li>
+        </ol>
+      </li>
+      <li><a href="#c2">État de l'art sur le sujet traité</a>
+        <ol class="niveau2">
+          <li><a href="#c2-1">Critères de comparaison</a></li>
+          <li><a href="#c2-2">Étude de chaque solution au vu des critères</a></li>
+          <li><a href="#c2-3">Tableau comparatif des solutions</a></li>
+        </ol>
+      </li>
+      <li><a href="#c3">Étude de l'existant et solution envisagée</a>
+        <ol class="niveau2">
+          <li><a href="#c3-1">Étude de l'existant</a></li>
+          <li><a href="#c3-2">Critique de l'existant</a></li>
+          <li><a href="#c3-3">Solution envisagée</a></li>
+          <li><a href="#c3-4">Objectifs principaux et livrables</a></li>
+        </ol>
+      </li>
+      <li><a href="#c4">Démarche projet</a>
+        <ol class="niveau2">
+          <li><a href="#c4-1">Principes de la démarche projet</a></li>
+          <li><a href="#c4-2">Contraintes et risques sur le projet</a></li>
+          <li><a href="#c4-3">Démarche projet mise en œuvre</a></li>
+          <li><a href="#c4-4">Planification</a></li>
+        </ol>
+      </li>
+      <li><a href="#c5">Exigences réalisées dans le projet</a>
+        <ol class="niveau2">
+          <li><a href="#c5-1">Exigences fonctionnelles — Cas d'utilisation</a></li>
+          <li><a href="#c5-2">Exigences non fonctionnelles transverses</a></li>
+          <li><a href="#c5-3">Interfaces détaillées</a></li>
+        </ol>
+      </li>
+      <li><a href="#c6">Architecture(s) système</a></li>
+      <li><a href="#c7">Conception du système logiciel</a>
+        <ol class="niveau2">
+          <li><a href="#c7-1">Plate-forme technique</a></li>
+          <li><a href="#c7-2">Conception du logiciel développé</a></li>
+        </ol>
+      </li>
+      <li><a href="#c8">Tests du système logiciel</a></li>
+      <li><a href="#c9">Conclusion générale</a></li>
+      <li><a href="#c10">Références et Bibliographie</a></li>
+      <li><a href="#c11">Annexes</a></li>
+    </ol>
+  </nav>
+</div>
+
+<!-- ============================================================= -->
+<!-- GLOSSAIRE                                                       -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="glossaire" style="margin-top:0">Glossaire</h1>
+  <p><strong>Gamme de montage</strong> : liste ordonnée des opérations d'assemblage nécessaires à la fabrication d'un vêtement, précisant pour chacune le temps standard, la machine utilisée et l'opérateur affecté.</p>
+  <p><strong>SMV (Standard Minute Value)</strong> : temps total standard, exprimé en minutes, nécessaire pour produire une pièce complète ; il correspond à la somme des temps de toutes les opérations de la gamme.</p>
+  <p><strong>Chaîne de production</strong> : ligne de fabrication physique regroupant un ensemble d'opérateurs dédiés ; deux chaînes différentes n'ont pas les mêmes opérateurs, même si elles portent parfois le même numéro chez des responsables différents.</p>
+  <p><strong>Matrice de compétences (Skill Matrix)</strong> : tableau croisant, pour chaque opérateur, les opérations qu'il a déjà réalisées, avec leur fréquence et leur temps moyen observé.</p>
+  <p><strong>NLP (Natural Language Processing / Traitement automatique du langage)</strong> : ensemble de techniques permettant à un système informatique d'analyser et de comparer des textes.</p>
+  <p><strong>TF-IDF (Term Frequency – Inverse Document Frequency)</strong> : méthode de vectorisation de texte pondérant les mots selon leur fréquence dans un document et leur rareté dans l'ensemble du corpus, utilisée ici pour comparer la description d'un prototype aux gammes historiques.</p>
+  <p><strong>Similarité cosinus</strong> : mesure de similarité entre deux vecteurs (ici, deux textes vectorisés), utilisée pour classer les gammes historiques les plus proches d'une description donnée.</p>
+  <p><strong>ML (Machine Learning)</strong> : sous-domaine de l'intelligence artificielle permettant à un système d'apprendre à partir de données, sans être explicitement programmé pour chaque cas.</p>
+  <p><strong>ERP (Enterprise Resource Planning)</strong> : logiciel de gestion intégré centralisant les activités d'une entreprise ; chez LOI Confection, le module de gamme de montage vient compléter l'ERP existant.</p>
+  <p><strong>MCD / MLD</strong> : Modèle Conceptuel de Données / Modèle Logique de Données, étapes de modélisation d'une base de données relationnelle.</p>
+</div>
+
+<!-- ============================================================= -->
+<!-- INTRODUCTION                                                    -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="introduction" style="margin-top:0">Introduction</h1>
+  <p>
+    Dans l'industrie de la confection textile, la préparation d'une gamme de montage — la définition précise
+    des opérations, de leurs temps standard et des opérateurs affectés — conditionne directement la
+    productivité d'une ligne de production. Une gamme mal calibrée entraîne des goulots d'étranglement, des
+    opérateurs affectés à des tâches qu'ils ne maîtrisent pas, ou une estimation erronée du temps de
+    production (SMV) communiquée au client.
+  </p>
+  <p>
+    Chez LOI Confection, cette préparation repose aujourd'hui sur l'expertise des agents de méthode, qui
+    s'appuient sur des années de fiches Excel accumulées, dispersées par opérateur, par année et par chaîne de
+    production, sans outil de recherche ni de réutilisation systématique de cet historique. Retrouver la
+    gamme la plus proche d'un nouveau prototype, et identifier quels opérateurs de la chaîne concernée
+    maîtrisent réellement les opérations nécessaires, reste un exercice manuel, lent et dépendant de la
+    mémoire individuelle.
+  </p>
+  <p>
+    C'est dans ce cadre qu'a été réalisé un stage <span class="placeholder">[à préciser : stage / projet
+    académique]</span> au sein de LOI Confection. Ce choix s'inscrit dans un parcours de formation en Master
+    MBDS et vise à mettre en pratique des compétences en développement, en traitement de données et en
+    intelligence artificielle, tout en répondant à un besoin concret de l'entreprise.
+  </p>
+  <p>Les missions confiées consistaient notamment à :</p>
+  <ul>
+    <li>explorer et fiabiliser l'historique de production disponible (fichiers Excel « BASE MANING »),</li>
+    <li>concevoir une base de données centralisant les gammes, les opérations et les opérateurs,</li>
+    <li>développer un moteur de recherche par similarité textuelle entre une description de prototype et les gammes historiques,</li>
+    <li>croiser ce résultat avec la matrice de compétences des opérateurs, par chaîne de production,</li>
+    <li>exposer une API REST et une interface web permettant de générer, corriger et sauvegarder une gamme.</li>
+  </ul>
+  <p>La problématique de ce travail peut être formulée ainsi :</p>
+  <div class="encadre">
+    « Comment automatiser la préparation d'une gamme de montage cohérente à partir de la seule description
+    d'un nouveau prototype, en s'appuyant sur l'historique réel de production et sur les compétences réelles
+    des opérateurs de chaque chaîne ? »
+  </div>
+  <p>Le rapport est structuré comme suit :</p>
+  <ul>
+    <li>Chapitre 1 : Présentation du stage et de l'entreprise.</li>
+    <li>Chapitre 2 : État de l'art sur la génération de gammes et les méthodes NLP/ML associées.</li>
+    <li>Chapitre 3 : Analyse de l'existant et solution envisagée.</li>
+    <li>Chapitre 4 : Démarche projet et méthodes.</li>
+    <li>Chapitre 5 : Exigences fonctionnelles et non fonctionnelles.</li>
+    <li>Chapitre 6 : Architecture cible.</li>
+    <li>Chapitre 7 : Conception logicielle et technique.</li>
+    <li>Chapitre 8 : Tests réalisés.</li>
+    <li>Chapitre 9 : Résultats, perspectives et bilan personnel.</li>
+  </ul>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 1                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c1" style="margin-top:0">1. Présentation du stage</h1>
+
+  <h2 id="c1-1">1.1 Présentation de l'entreprise</h2>
+  <p>
+    Créée en 1995 par Chiheb Bouhali et Chabina Meraly, L.O.I (Lingerie de l'Océan Indien) se spécialise
+    dans la lingerie corsetterie. L'atelier fait partie des pionniers des nouveaux confectionneurs malgaches
+    installés dès le début des années 1990.
+  </p>
+  <p>
+    En 2001, L.O.I participe en tant que membre fondateur à la création du premier cluster textile de
+    Madagascar : « Text'île Mada », aux côtés de quatre autres usines locales.
+  </p>
+  <p>
+    En 2009, alors que les ateliers comptent près de 400 collaborateurs, l'entreprise pivote et devient LOI
+    Confection afin de se spécialiser dans un nouveau secteur d'activité : la fabrication de prêt-à-porter en
+    chaîne-et-trame.
+  </p>
+  <p>
+    Aujourd'hui, LOI Confection compte plus de 800 collaborateurs avec des savoir-faire variés, allant de la
+    confection chaîne-et-trame, à la maille, ainsi qu'à la fabrication d'accessoires textiles. L'entreprise
+    organise sa production en plusieurs <em>chaînes</em>, chacune dotée de son propre effectif d'opérateurs
+    spécialisés, réparties entre plusieurs responsables de méthode.
+  </p>
+  <p>
+    Le secteur du textile est particulièrement exigeant en termes de qualité, de rapidité et de flexibilité.
+    Dans ce contexte, la préparation des gammes de montage — étape préalable à tout lancement de production —
+    doit être à la fois rapide et fiable, alors qu'elle repose aujourd'hui presque entièrement sur l'expérience
+    individuelle des agents de méthode et sur des fichiers Excel non centralisés.
+  </p>
+
+  <h2 id="c1-2">1.2 Présentation du sujet et objectifs du projet (problème traité)</h2>
+  <p>
+    Le projet porte sur la conception et le développement d'un outil de <strong>génération intelligente de
+    gammes de montage</strong>, permettant à un agent de méthode de saisir la description libre d'un nouveau
+    prototype et d'obtenir automatiquement une proposition de gamme cohérente : liste ordonnée des opérations,
+    temps standard, machine et opérateur suggéré pour chacune.
+  </p>
+  <p>Ses objectifs principaux sont les suivants :</p>
+  <ul>
+    <li>Centraliser l'historique de production, aujourd'hui dispersé dans plus de 6500 fichiers Excel hétérogènes.</li>
+    <li>Retrouver automatiquement, par similarité textuelle, la gamme historique la plus proche d'une nouvelle description de prototype.</li>
+    <li>Reconstruire une matrice de compétences réelle par chaîne de production, à partir de l'historique des affectations.</li>
+    <li>Suggérer, pour chaque opération, l'opérateur le plus expérimenté <em>sur la chaîne choisie</em> pour la production.</li>
+    <li>Recommander la chaîne la mieux équipée pour réaliser une production donnée, indépendamment de la chaîne historique.</li>
+    <li>Permettre à l'agent de méthode de corriger la proposition (opération, temps, opérateur), de fixer une SMV cible répartie automatiquement sur les opérations, puis de l'enregistrer.</li>
+    <li>Offrir un historique consultable, filtrable par chaîne, avec recherche texte, et toujours modifiable.</li>
+  </ul>
+  <p>
+    Ce projet se distingue par la combinaison d'une approche NLP simple mais robuste (recherche par similarité
+    textuelle) avec une contrainte métier forte et peu triviale : une chaîne de production a ses propres
+    opérateurs, et un opérateur suggéré doit être crédible vis-à-vis de la chaîne réellement choisie pour la
+    production, et non uniquement vis-à-vis de la chaîne qui a historiquement produit un article similaire.
+  </p>
+  <p>Les principaux enjeux identifiés sont :</p>
+  <ul>
+    <li>la réduction du temps de préparation d'une nouvelle gamme,</li>
+    <li>la fiabilisation des affectations d'opérateurs selon leurs compétences réelles,</li>
+    <li>la valorisation d'un historique de production jusqu'ici sous-exploité.</li>
+  </ul>
+  <p>Les principaux risques concernent :</p>
+  <ul>
+    <li>la qualité et l'hétérogénéité des données Excel sources (en-têtes variables, lignes parasites, colonnes manquantes),</li>
+    <li>l'incomplétude des temps chronométrés dans une partie non négligeable de l'historique (environ 28 % des gammes réelles),</li>
+    <li>la réutilisation d'un même numéro de chaîne par des responsables différents pour désigner des lignes physiquement distinctes.</li>
+  </ul>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 2                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c2" style="margin-top:0">2. État de l'art sur le sujet traité</h1>
+
+  <h2 id="c2-1">2.1 Critères de comparaison</h2>
+  <p>Les critères retenus pour comparer les approches existantes de génération/réutilisation de gammes sont :</p>
+  <ul>
+    <li><strong>Réutilisation de l'historique</strong> : capacité à retrouver et exploiter des gammes déjà produites.</li>
+    <li><strong>Prise en compte des compétences</strong> : intégration d'une matrice de compétences opérateurs.</li>
+    <li><strong>Capacité de recherche/matching</strong> : possibilité de retrouver une gamme proche d'une nouvelle description.</li>
+    <li><strong>Flexibilité</strong> : adaptation à des données hétérogènes et incomplètes, fréquentes en PME.</li>
+    <li><strong>Coût et complexité de mise en œuvre</strong>.</li>
+  </ul>
+
+  <h2 id="c2-2">2.2 Étude de chaque solution au vu des critères</h2>
+
+  <h3>2.2.1 Systèmes PLM/ERP avec module de gammes</h3>
+  <p>
+    Les grands progiciels PLM (Product Lifecycle Management) et certains modules ERP proposent une gestion
+    structurée des gammes, avec des temps standards issus de bases de données de type GSD/MTM (temps
+    prédéterminés). Ces systèmes sont robustes mais coûteux, longs à déployer et peu adaptés à la reprise d'un
+    historique existant hétérogène comme celui de LOI Confection — plusieurs fichiers explorés dans le cadre
+    de ce projet suivaient d'ailleurs un format proche d'un export GSD (codes d'opération standardisés, temps
+    machine), sans toutefois être exploitable directement en base.
+  </p>
+
+  <h3>2.2.2 Bases de gammes figées / bibliothèques de temps</h3>
+  <p>
+    Une approche plus légère consiste à conserver une bibliothèque de gammes types, sélectionnées manuellement
+    par similitude de modèle. Cette approche reste rapide à mettre en œuvre mais dépend entièrement du
+    jugement humain pour identifier la gamme la plus proche, sans automatisation ni recherche systématique.
+  </p>
+
+  <h3>2.2.3 Recherche d'information et similarité textuelle (NLP)</h3>
+  <p>
+    Les techniques de recherche d'information, en particulier la vectorisation TF-IDF combinée à une mesure de
+    similarité cosinus, permettent de retrouver automatiquement, au sein d'un corpus de documents, ceux qui
+    sont les plus proches d'une requête textuelle. Cette approche est simple à mettre en œuvre, ne nécessite
+    pas de données d'entraînement supervisées, et s'adapte bien à un corpus évolutif — elle est particulièrement
+    pertinente lorsque, comme ici, chaque gamme historique peut être représentée par un document texte
+    (nom de l'article et libellés des opérations).
+  </p>
+
+  <h3>2.2.4 Machine Learning appliqué à l'affectation et à la prédiction de temps</h3>
+  <p>
+    Au-delà de la recherche par similarité, des modèles de régression (forêts aléatoires, par exemple)
+    peuvent être entraînés pour prédire un temps d'opération à partir de caractéristiques du prototype. Cette
+    approche est prometteuse mais suppose un historique propre et suffisamment volumineux ; dans ce projet,
+    elle constitue une perspective d'évolution (voir Chapitre 9) plutôt qu'une brique implémentée dès la
+    première version.
+  </p>
+
+  <h2 id="c2-3">2.3 Tableau comparatif des solutions au vu des critères</h2>
+  <table>
+    <caption class="legende">Tableau 1 : Comparatif des approches de génération/réutilisation de gammes</caption>
+    <tr><th>Critères</th><th>PLM/ERP avec gammes</th><th>Bibliothèque figée</th><th>NLP (TF-IDF)</th><th>ML prédictif</th></tr>
+    <tr><td>Réutilisation historique</td><td>Élevée</td><td>Moyenne</td><td>Élevée</td><td>Élevée</td></tr>
+    <tr><td>Compétences opérateurs</td><td>Variable</td><td>Nulle</td><td>Ajoutée par croisement</td><td>Ajoutée par croisement</td></tr>
+    <tr><td>Capacité de recherche</td><td>Moyenne</td><td>Nulle (manuelle)</td><td>Élevée</td><td>Élevée</td></tr>
+    <tr><td>Flexibilité aux données hétérogènes</td><td>Faible</td><td>Élevée</td><td>Élevée</td><td>Moyenne</td></tr>
+    <tr><td>Coût / complexité</td><td>Élevé</td><td>Faible</td><td>Faible</td><td>Moyen</td></tr>
+  </table>
+  <p>
+    Cette étude a orienté le choix retenu (Chapitre 3) : une solution combinant un moteur NLP léger (TF-IDF)
+    pour le matching de gammes, une matrice de compétences reconstruite à partir de l'historique réel, et une
+    architecture ouverte permettant d'introduire ultérieurement des modèles ML plus avancés.
+  </p>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 3                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c3" style="margin-top:0">3. Étude de l'existant et solution envisagée</h1>
+
+  <h2 id="c3-1">3.1 Étude de l'existant</h2>
+  <h3>3.1.1 Description externe du système existant (vision utilisateur)</h3>
+  <p>
+    Chez LOI Confection, la préparation d'une gamme de montage repose sur l'expérience des agents de méthode.
+    Pour chaque nouveau prototype, l'agent doit :
+  </p>
+  <ul>
+    <li>se remémorer ou rechercher manuellement, parmi des centaines de fichiers Excel, un modèle déjà produit dont il pense qu'il ressemble au nouveau prototype,</li>
+    <li>reprendre à la main la liste des opérations de ce fichier,</li>
+    <li>choisir lui-même les opérateurs, sans outil consolidé de compétences par chaîne,</li>
+    <li>calculer manuellement la SMV totale.</li>
+  </ul>
+
+  <h3>3.1.2 Description interne du système existant (vision développeur/conception)</h3>
+  <p>
+    Sur le plan technique, l'historique de production est stocké sous forme de fichiers Excel individuels,
+    organisés dans une arborescence <code>« Responsable / Année / Chaîne / Fichier.xlsx »</code> (dossier
+    « BASE MANING »). L'exploration menée en début de projet a porté sur 6566 fichiers <code>.xlsx</code>/<code>.xlsm</code>.
+  </p>
+  <p>Cette exploration a mis en évidence une forte hétérogénéité :</p>
+  <ul>
+    <li>la feuille utile n'est pas toujours nommée « EQUILIBRAGE » (variantes : « EQUI », « EQUILIBRÉ À 70 % », noms de modèles...) ; une détection par contenu des en-têtes a été nécessaire en complément de la détection par nom, portant le taux de fichiers exploitables de 5231 à 6122 sur 6566 (94 %),</li>
+    <li>les en-têtes de colonnes varient en casse, en accentuation et en formulation (« Nom op » / « Nom des op », « QTE/H/OPERATION » / « TRGT CHRONO »...),</li>
+    <li>le numéro de poste indiqué dans le fichier (« POSTE N° ») est trop souvent vide ou incohérent pour servir de base à l'ordre des opérations ; l'ordre réel des lignes dans le tableau a donc été retenu comme critère fiable,</li>
+    <li>certains fichiers contiennent, en fin de tableau, un bloc de suivi administratif (chef de chaîne, effectif, minutes produites/présence) qui se confond visuellement avec la liste des opérations,</li>
+    <li>environ 28 % des gammes ne comportent aucun temps chronométré exploitable.</li>
+  </ul>
+
+  <h2 id="c3-2">3.2 Critique de l'existant</h2>
+  <p><strong>Points positifs :</strong></p>
+  <ul>
+    <li>Un historique de production très riche (plus de 6000 gammes réelles, 188 000 lignes d'opérations après import).</li>
+    <li>Des données suffisamment structurées, une fois nettoyées, pour être exploitées automatiquement.</li>
+  </ul>
+  <p><strong>Points négatifs :</strong></p>
+  <ul>
+    <li>Aucune centralisation : chaque fichier est isolé, sans recherche possible.</li>
+    <li>Aucune traçabilité formelle des compétences des opérateurs.</li>
+    <li>Dépendance forte à la mémoire individuelle des agents de méthode.</li>
+    <li>Risque d'erreur lors de la reprise manuelle d'une gamme existante.</li>
+    <li>Aucun calcul automatique de la SMV.</li>
+  </ul>
+
+  <h2 id="c3-3">3.3 Solutions envisagées</h2>
+  <p>La solution proposée est une application de génération intelligente de gammes, intégrant :</p>
+  <ul>
+    <li><strong>Un pipeline d'import et de nettoyage</strong> des fichiers Excel historiques vers une base de données relationnelle unique.</li>
+    <li><strong>Un moteur de matching NLP</strong> (TF-IDF + similarité cosinus) retrouvant la gamme historique la plus proche d'une description de prototype.</li>
+    <li><strong>Une matrice de compétences reconstruite</strong> à partir de l'historique réel des affectations, par opérateur, par opération et <em>par chaîne</em>.</li>
+    <li><strong>Un modèle de Machine Learning (Random Forest)</strong> entraîné sur l'ensemble des temps réellement chronométrés, prédisant un temps standard plausible lorsqu'aucune donnée historique (ni sur la ligne, ni sur l'opérateur) n'est disponible pour une opération.</li>
+    <li><strong>Un moteur de suggestion et de recommandation</strong> proposant un opérateur par opération (en priorité sur la chaîne choisie) et une chaîne la mieux équipée pour la production.</li>
+    <li><strong>Un backend FastAPI</strong> exposant l'ensemble sous forme d'API REST.</li>
+    <li><strong>Un frontend React/TypeScript</strong> permettant de générer, corriger, chiffrer en SMV, enregistrer et consulter l'historique des gammes.</li>
+  </ul>
+
+  <h2 id="c3-4">3.4 Objectifs principaux et livrables</h2>
+  <p><strong>Objectifs principaux :</strong></p>
+  <ul>
+    <li>Automatiser la proposition d'une gamme de montage à partir d'une description libre.</li>
+    <li>Fiabiliser l'affectation des opérateurs selon leurs compétences réelles et leur chaîne.</li>
+    <li>Offrir un historique centralisé, recherchable et toujours modifiable.</li>
+  </ul>
+  <p><strong>Livrables :</strong></p>
+  <ul>
+    <li>Backend FastAPI complet (API REST, moteur de matching, service de génération).</li>
+    <li>Scripts d'import et de nettoyage des données historiques, réutilisables et idempotents.</li>
+    <li>Modèle de Machine Learning entraîné et sauvegardé (script d'entraînement réutilisable, métriques d'évaluation documentées).</li>
+    <li>Base de données PostgreSQL peuplée (schéma documenté).</li>
+    <li>Frontend React fonctionnel (génération, historique, édition).</li>
+    <li>Suite de tests automatisés (pytest, Playwright).</li>
+    <li>Présent rapport.</li>
+  </ul>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 4                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c4" style="margin-top:0">4. Démarche projet</h1>
+
+  <h2 id="c4-1">4.1 Principes de la démarche projet</h2>
+  <h3>4.1.1 Activités d'ingénierie logicielle</h3>
+  <p>
+    Le projet a été conduit selon une démarche <strong>itérative et incrémentale</strong>, chaque
+    fonctionnalité étant spécifiée, développée, testée puis validée avant de passer à la suivante, sur la
+    base de retours réguliers. Cette approche s'est avérée particulièrement adaptée à un contexte où la
+    donnée réelle (les fichiers Excel historiques) réservait des surprises à chaque étape d'exploration,
+    obligeant à ajuster fréquemment la conception initiale.
+  </p>
+  <p>Les principales activités menées, dans l'ordre où elles se sont enchaînées, sont les suivantes :</p>
+  <ul>
+    <li><strong>Exploration des données</strong> : analyse statistique des en-têtes de colonnes sur l'ensemble du corpus Excel, avant toute décision de modélisation.</li>
+    <li><strong>Conception du modèle de données</strong> : élaboration itérative du schéma relationnel (Article, Gamme, GammeLigne, Opérateur, Compétence), enrichi au fil des besoins (ajout de la notion de chaîne, ajout de la date d'enregistrement).</li>
+    <li><strong>Développement du pipeline d'import</strong> : script robuste, idempotent, avec nettoyage progressif (données parasites, extraction de la chaîne).</li>
+    <li><strong>Développement du moteur IA</strong> : matching textuel, puis croisement avec la matrice de compétences, puis contrainte de chaîne, puis recommandation de chaîne.</li>
+    <li><strong>Développement de l'API REST puis du frontend</strong>, avec vérification systématique en conditions réelles (navigateur piloté) à chaque fonctionnalité livrée.</li>
+    <li><strong>Tests</strong> : écriture de tests automatisés au fil de l'eau, à chaque nouvelle fonctionnalité, plutôt qu'en fin de projet.</li>
+  </ul>
+
+  <h3>4.1.2 Méthode de gestion de projet utilisée</h3>
+  <p>
+    Le projet a été conduit selon une méthode <strong>agile, en cycles courts</strong> : chaque besoin exprimé
+    donnait lieu à une fonctionnalité complète (backend, tests, frontend) livrée et vérifiée avant de passer
+    au besoin suivant. Cette organisation a permis d'absorber les découvertes issues de l'exploration des
+    données réelles (formats hétérogènes, lignes parasites, chevauchement de numérotation de chaînes) sans
+    remettre en cause l'ensemble du planning.
+  </p>
+
+  <h3>4.1.3 Rôles et responsabilités</h3>
+  <p><span class="placeholder">[À compléter : préciser ici l'encadrement (encadrant professionnel côté LOI Confection, encadrant académique MBDS) et les modalités de suivi mises en place durant le projet.]</span></p>
+
+  <h3>4.1.4 Outils</h3>
+  <p><strong>Environnement de développement :</strong></p>
+  <ul>
+    <li>IDE : Visual Studio Code.</li>
+    <li>Langages : Python 3.11 (backend, import, moteur IA), TypeScript (frontend).</li>
+  </ul>
+  <p><strong>Base de données :</strong></p>
+  <ul>
+    <li>PostgreSQL, avec SQLAlchemy comme ORM côté FastAPI.</li>
+  </ul>
+  <p><strong>Frameworks et bibliothèques :</strong></p>
+  <ul>
+    <li>Backend : FastAPI, Pydantic v2, Uvicorn.</li>
+    <li>Frontend : React 18, TypeScript, Vite.</li>
+    <li>Traitement de données : openpyxl (extraction Excel), scikit-learn (TF-IDF, similarité cosinus).</li>
+  </ul>
+  <p><strong>Tests et validation :</strong></p>
+  <ul>
+    <li>pytest (tests unitaires et d'intégration backend, sur base SQLite en mémoire isolée de la production).</li>
+    <li>Playwright (tests de bout en bout pilotant un navigateur réel, sur environnement isolé).</li>
+  </ul>
+
+  <h3>4.1.5 Gestion de la configuration</h3>
+  <p>Le projet est structuré en deux répertoires principaux :</p>
+  <ul>
+    <li><code>/backend</code> : API FastAPI, modèles SQLAlchemy, schémas Pydantic, services métier, scripts d'import et de maintenance des données, tests.</li>
+    <li><code>/frontend</code> : application React/TypeScript (pages, composants, client API, types).</li>
+  </ul>
+
+  <h2 id="c4-2">4.2 Contraintes et risques sur le projet</h2>
+  <h3>4.2.1 Contraintes du projet</h3>
+  <ul>
+    <li><strong>Fidélité à la donnée source</strong> : les corrections apportées aux données importées (suppression de lignes parasites, extraction de la chaîne) devaient rester traçables et ne jamais altérer silencieusement l'information réelle.</li>
+    <li><strong>Une chaîne a ses propres opérateurs</strong> : contrainte métier centrale, imposant que toute suggestion d'opérateur soit vérifiée par rapport à la chaîne réellement ciblée par la production, et non uniquement par rapport à l'historique.</li>
+    <li><strong>Réversibilité</strong> : les gammes générées ne devaient jamais écraser une gamme historique servant de référence — toute sauvegarde crée un nouvel enregistrement.</li>
+  </ul>
+
+  <h3>4.2.2 Risques et plan de mitigation</h3>
+  <table>
+    <caption class="legende">Tableau 2 : Risques et plan de mitigation</caption>
+    <tr><th>Risque identifié</th><th>Facteurs contributeurs</th><th>Mesures préventives et correctives</th></tr>
+    <tr>
+      <td>Hétérogénéité des fichiers Excel sources</td>
+      <td>Six ans de fichiers saisis manuellement par des personnes différentes</td>
+      <td>Détection de feuille par nom puis par contenu ; dictionnaire de synonymes de colonnes validé sur échantillon avant généralisation</td>
+    </tr>
+    <tr>
+      <td>Données parasites confondues avec de vraies opérations</td>
+      <td>Bloc de suivi administratif en bas de tableau (chef de chaîne, effectif...)</td>
+      <td>Liste de libellés parasites constituée par analyse de fréquence, appliquée au nettoyage puis vérifiée par échantillonnage</td>
+    </tr>
+    <tr>
+      <td>Numérotation de chaîne ambiguë</td>
+      <td>Même numéro de chaîne réutilisé par des responsables différents pour des lignes physiquement distinctes</td>
+      <td>Clé de chaîne composée (responsable + numéro), garantissant l'unicité réelle</td>
+    </tr>
+    <tr>
+      <td>Temps d'opération manquants (≈28 % des gammes)</td>
+      <td>Fiches historiques sans étape de chronométrage/équilibrage complète</td>
+      <td>Repli sur le temps moyen historique de l'opérateur suggéré pour l'opération concernée, explicitement signalé comme « estimé »</td>
+    </tr>
+    <tr>
+      <td>Environnement de développement Windows instable</td>
+      <td>Processus fantôme bloquant un port réseau, sans possibilité de l'identifier ni de le stopper</td>
+      <td>Utilisation systématique de ports alternatifs et de fichiers de configuration de test isolés pour ne jamais interrompre une session active</td>
+    </tr>
+  </table>
+
+  <h2 id="c4-3">4.3 Démarche projet mise en œuvre</h2>
+  <p>
+    Le projet a été conduit par itérations fonctionnelles complètes, chacune couvrant la chaîne backend →
+    tests → frontend → vérification en conditions réelles, dans l'ordre suivant :
+  </p>
+  <ol>
+    <li>Exploration et fiabilisation des colonnes de la feuille « EQUILIBRAGE » sur l'ensemble du corpus.</li>
+    <li>Conception du schéma de base de données et mise en place de données de test, pour ne pas bloquer le développement de l'API et du frontend en attendant l'import réel.</li>
+    <li>Développement de l'API REST (lecture, puis création/modification) sur les articles, gammes et opérateurs.</li>
+    <li>Mise en place de tests automatisés systématiques.</li>
+    <li>Import réel du corpus historique complet (~6500 fichiers) et nettoyage des données parasites.</li>
+    <li>Développement du moteur de matching NLP (TF-IDF) et de la matrice de compétences.</li>
+    <li>Ajout de la notion de chaîne de production, contrainte forte sur la suggestion d'opérateur.</li>
+    <li>Ajout de la recommandation de la chaîne la mieux équipée pour une production donnée.</li>
+    <li>Développement du frontend (génération, édition, historique, recherche).</li>
+    <li>Ajout de la fonctionnalité de sauvegarde des gammes générées et de leur édition depuis l'historique.</li>
+    <li>Ajout du calcul et de la répartition de la SMV.</li>
+    <li>Génération de dates d'enregistrement réalistes pour l'historique importé, à partir de l'année réelle du chemin source.</li>
+  </ol>
+
+  <h2 id="c4-4">4.4 Planification</h2>
+  <p><span class="placeholder">[À compléter : durée réelle du stage/projet et macro-planning par semaine, sur le même modèle que le Tableau 3 du document de référence, à adapter aux dates réelles.]</span></p>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 5                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c5" style="margin-top:0">5. Exigences réalisées dans le projet (vision externe/utilisateur)</h1>
+
+  <h2 id="c5-1">5.1 Exigences fonctionnelles — Cas d'utilisation</h2>
+
+  <div class="cas-utilisation">
+    <h3 style="margin-top:0">Cas d'utilisation 1 : Générer une gamme de montage</h3>
+    <dl>
+      <dt>Acteur</dt><dd>Agent de méthode</dd>
+      <dt>Préconditions</dt><dd>Un historique de gammes indexé est disponible</dd>
+      <dt>Postconditions</dt><dd>Une gamme proposée (opérations, temps, opérateurs suggérés) est affichée</dd>
+      <dt>Description</dt>
+      <dd>
+        1. L'agent de méthode saisit la description libre du prototype, choisit éventuellement une chaîne de
+        production et une SMV cible.<br>
+        2. Le système recherche par similarité textuelle la gamme historique la plus proche.<br>
+        3. Pour chaque opération de cette gamme, le système suggère l'opérateur le plus expérimenté sur la
+        chaîne ciblée (ou, à défaut, sur une autre chaîne, avec avertissement explicite).<br>
+        4. Si aucun temps mesuré n'existe pour une opération, le système propose le temps moyen historique de
+        l'opérateur suggéré.<br>
+        5. Si une SMV cible a été saisie, les temps de toutes les opérations sont répartis proportionnellement
+        pour atteindre exactement ce total.
+      </dd>
+      <dt>Exception</dt><dd>Si aucune gamme historique exploitable n'est trouvée, une erreur explicite est renvoyée.</dd>
+    </dl>
+  </div>
+
+  <div class="cas-utilisation">
+    <h3 style="margin-top:0">Cas d'utilisation 2 : Corriger et enregistrer une gamme générée</h3>
+    <dl>
+      <dt>Acteur</dt><dd>Agent de méthode</dd>
+      <dt>Préconditions</dt><dd>Une gamme a été générée</dd>
+      <dt>Postconditions</dt><dd>Une nouvelle gamme est créée et visible dans l'historique</dd>
+      <dt>Description</dt>
+      <dd>
+        1. L'agent de méthode corrige librement, ligne par ligne, le libellé d'opération, le temps ou
+        l'opérateur (avec auto-complétion sur les opérateurs réels de la chaîne).<br>
+        2. Il nomme la gamme et choisit sa date d'enregistrement (par défaut, la date du jour).<br>
+        3. Le système crée un nouvel article et une nouvelle gamme, sans jamais modifier la gamme historique
+        ayant servi de référence.
+      </dd>
+    </dl>
+  </div>
+
+  <div class="cas-utilisation">
+    <h3 style="margin-top:0">Cas d'utilisation 3 : Choisir la chaîne la mieux équipée</h3>
+    <dl>
+      <dt>Acteur</dt><dd>Agent de méthode</dd>
+      <dt>Description</dt>
+      <dd>
+        1. Après génération, le système affiche le classement des chaînes couvrant le plus grand nombre
+        d'opérations de la gamme avec des opérateurs expérimentés.<br>
+        2. L'agent de méthode peut sélectionner directement une chaîne suggérée, ce qui régénère
+        immédiatement les suggestions d'opérateurs pour cette chaîne.
+      </dd>
+    </dl>
+  </div>
+
+  <div class="cas-utilisation">
+    <h3 style="margin-top:0">Cas d'utilisation 4 : Consulter et modifier l'historique</h3>
+    <dl>
+      <dt>Acteur</dt><dd>Agent de méthode</dd>
+      <dt>Description</dt>
+      <dd>
+        1. L'agent de méthode recherche une gamme par nom/référence, ou filtre par chaîne, dans une liste
+        paginée triée par date d'enregistrement.<br>
+        2. Il consulte le détail complet d'une gamme (opérations, temps, opérateurs, date).<br>
+        3. Il peut corriger n'importe quelle gamme historique, même déjà enregistrée, de la même façon qu'une
+        gamme fraîchement générée.
+      </dd>
+    </dl>
+  </div>
+
+  <h2 id="c5-2">5.2 Exigences non fonctionnelles transverses</h2>
+  <table>
+    <caption class="legende">Tableau 3 : Exigences non fonctionnelles</caption>
+    <tr><th>Catégorie</th><th>Exigence</th><th>Description</th></tr>
+    <tr>
+      <td>Cohérence métier</td>
+      <td>Respect strict des chaînes de production</td>
+      <td>Un opérateur suggéré hors de la chaîne cible doit toujours être signalé explicitement à l'utilisateur (jamais silencieux).</td>
+    </tr>
+    <tr>
+      <td>Traçabilité</td>
+      <td>Distinction données réelles / données de test</td>
+      <td>Les données de démonstration (préfixe « DEMO- ») sont toujours exclues des suggestions et statistiques réelles.</td>
+    </tr>
+    <tr>
+      <td>Non-régression</td>
+      <td>Suite de tests systématique</td>
+      <td>Chaque fonctionnalité livrée est accompagnée de tests automatisés couvrant le cas nominal et les cas d'erreur.</td>
+    </tr>
+    <tr>
+      <td>Réversibilité</td>
+      <td>Aucune écriture destructive</td>
+      <td>La génération et la sauvegarde d'une gamme ne modifient jamais la gamme historique de référence.</td>
+    </tr>
+    <tr>
+      <td>Performance</td>
+      <td>Recherche par similarité</td>
+      <td>L'index de matching (TF-IDF) est construit une fois en mémoire et réutilisé pour chaque requête, avec possibilité de réindexation à la demande après import.</td>
+    </tr>
+    <tr>
+      <td>Interopérabilité</td>
+      <td>API REST documentée</td>
+      <td>L'ensemble des fonctionnalités est exposé via une API REST FastAPI, avec documentation interactive générée automatiquement (Swagger).</td>
+    </tr>
+  </table>
+
+  <h2 id="c5-3">5.3 Interfaces détaillées</h2>
+  <h3>5.3.1 IHM</h3>
+  <p>
+    L'interface web comporte deux écrans principaux, accessibles par onglets et dont le dernier onglet
+    consulté est mémorisé d'une session à l'autre :
+  </p>
+  <ul>
+    <li><strong>Écran « Ajout »</strong> : formulaire de description du prototype, sélection de la chaîne et de la SMV cible, bouton de génération, tableau éditable du résultat (opération, machine, temps, opérateur), section de recommandation de chaîne, et formulaire d'enregistrement (nom, date).</li>
+    <li><strong>Écran « Historique »</strong> : barre de recherche et filtre par chaîne, tableau paginé (code, nom, chaîne, date), et vue de détail éditable au clic sur une ligne.</li>
+  </ul>
+  <p class="legende">[Figures à insérer : captures d'écran des deux écrans principaux et du tableau de résultat de génération.]</p>
+
+  <h3>5.3.2 Interfaces avec d'autres systèmes</h3>
+  <p>API REST (FastAPI), principaux points d'entrée :</p>
+  <ul>
+    <li><code>POST /gammes/generer</code> → génère une proposition de gamme à partir d'une description.</li>
+    <li><code>POST /gammes/enregistrer</code> → enregistre une gamme (générée puis corrigée) comme nouvel article.</li>
+    <li><code>GET /articles</code>, <code>GET /articles/&#123;id&#125;</code> → liste et détail de l'historique.</li>
+    <li><code>PUT /gamme-lignes/&#123;id&#125;</code> → correction d'une ligne de gamme, y compris depuis l'historique.</li>
+    <li><code>GET /chaines</code>, <code>GET /chaines/&#123;chaine&#125;/operateurs</code> → référentiel des chaînes et de leurs opérateurs.</li>
+    <li><code>POST /gammes/reindexer</code> → reconstruction de l'index de matching après un nouvel import.</li>
+  </ul>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 6                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c6" style="margin-top:0">6. Architecture(s) système</h1>
+  <p>
+    L'architecture repose sur une organisation classique en trois couches, modulaire et interopérable :
+  </p>
+  <ul>
+    <li>une couche présentation (frontend React/TypeScript),</li>
+    <li>une couche application (API FastAPI, moteur de matching NLP, services métier),</li>
+    <li>une couche données (PostgreSQL).</li>
+  </ul>
+
+  <h2>6.1 Architecture technique</h2>
+  <p class="legende">[Figure à insérer : schéma global Frontend React ↔ API FastAPI ↔ PostgreSQL, avec le moteur TF-IDF en mémoire côté application.]</p>
+  <table>
+    <caption class="legende">Tableau 4 : Description des composants techniques</caption>
+    <tr><th>Composant</th><th>Rôle</th><th>Technologies</th></tr>
+    <tr>
+      <td>Frontend React</td>
+      <td>Interface de génération, correction et consultation de l'historique des gammes</td>
+      <td>React 18, TypeScript, Vite</td>
+    </tr>
+    <tr>
+      <td>API FastAPI</td>
+      <td>Expose les endpoints REST, orchestre le matching, la génération et la persistance</td>
+      <td>Python 3.11, FastAPI, Pydantic v2, Uvicorn</td>
+    </tr>
+    <tr>
+      <td>Moteur de matching NLP</td>
+      <td>Vectorise les documents de gammes et calcule la similarité avec la description saisie</td>
+      <td>scikit-learn (TfidfVectorizer, cosine_similarity)</td>
+    </tr>
+    <tr>
+      <td>Service de compétences</td>
+      <td>Reconstruit et interroge la matrice de compétences par opérateur, opération et chaîne</td>
+      <td>SQLAlchemy / PostgreSQL</td>
+    </tr>
+    <tr>
+      <td>Pipeline d'import</td>
+      <td>Extrait, nettoie et charge le contenu des fichiers Excel historiques</td>
+      <td>openpyxl, scripts Python idempotents</td>
+    </tr>
+    <tr>
+      <td>Base de données</td>
+      <td>Persistance des articles, gammes, opérations, opérateurs et compétences</td>
+      <td>PostgreSQL</td>
+    </tr>
+  </table>
+
+  <h2>6.2 Architecture logicielle</h2>
+  <p>L'architecture logicielle backend est organisée en couches :</p>
+  <ol>
+    <li><strong>Couche schéma (Pydantic)</strong> : validation des entrées/sorties de l'API.</li>
+    <li><strong>Couche routes (FastAPI)</strong> : points d'entrée REST, volontairement fins — chaque route ne fait qu'appeler un service.</li>
+    <li><strong>Couche service</strong> : logique métier (matching, génération, compétences, gestion des chaînes, import).</li>
+    <li><strong>Couche modèles (SQLAlchemy)</strong> : mapping objet-relationnel vers PostgreSQL.</li>
+  </ol>
+  <p>
+    Cette séparation stricte entre routes et services a permis de tester la logique métier indépendamment de
+    la couche HTTP, et de réutiliser les mêmes services aussi bien depuis l'API que depuis les scripts de
+    maintenance (import, reconstruction de la matrice de compétences, réindexation).
+  </p>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 7                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c7" style="margin-top:0">7. Conception du système logiciel réalisée dans le projet (vision interne/développeur)</h1>
+
+  <h2 id="c7-1">7.1 Plate-forme technique</h2>
+  <ul>
+    <li>Backend : FastAPI (Python 3.11), Uvicorn comme serveur ASGI.</li>
+    <li>Traitement de données et IA : openpyxl, scikit-learn.</li>
+    <li>Base de données : PostgreSQL, SQLAlchemy 2.0 comme ORM.</li>
+    <li>Frontend : React 18, TypeScript, Vite.</li>
+    <li>Tests : pytest (backend, base SQLite en mémoire isolée), Playwright (bout en bout, navigateur réel).</li>
+  </ul>
+
+  <h2 id="c7-2">7.2 Conception du logiciel développé</h2>
+  <h3>7.2.1 Conception du code source</h3>
+  <p>Le backend est structuré en packages :</p>
+  <ul>
+    <li><code>models/</code> → modèles de données SQLAlchemy.</li>
+    <li><code>schema/</code> → schémas de validation Pydantic (entrée/sortie de l'API).</li>
+    <li><code>service/</code> → logique métier (article, gamme, matching, génération, chaîne, opérateur).</li>
+    <li><code>scripts/</code> → import des données historiques, reconstruction de la matrice de compétences, génération des dates réalistes.</li>
+    <li><code>tests/</code> → suite de tests automatisés.</li>
+    <li><code>main.py</code> → déclaration des routes FastAPI, volontairement réduites à un simple aiguillage vers les services.</li>
+  </ul>
+  <p>Le frontend est structuré en :</p>
+  <ul>
+    <li><code>pages/</code> → écrans « Ajout » et « Historique ».</li>
+    <li><code>components/</code> → composants réutilisables (tableau de résultat, sélecteur de chaîne, vue de détail d'historique, champs de formulaire).</li>
+    <li><code>api/</code> → client HTTP typé vers l'API REST.</li>
+    <li><code>types/</code> → types TypeScript reflétant les schémas Pydantic du backend.</li>
+  </ul>
+
+  <h3>7.2.2 Le code source — vue statique</h3>
+  <p>Extraits représentatifs présentés en annexe :</p>
+  <ul>
+    <li>Annexe 1 : Service de matching NLP (construction du document de gamme, TF-IDF, similarité cosinus).</li>
+    <li>Annexe 2 : Service de génération (croisement matching + compétences + contrainte de chaîne).</li>
+    <li>Annexe 3 : Modèles de données SQLAlchemy.</li>
+    <li>Annexe 4 : Extrait du pipeline d'import et de nettoyage.</li>
+    <li>Annexe 5 : Entraînement du modèle de prédiction de temps.</li>
+  </ul>
+
+  <h3>7.2.3 Modélisation de données</h3>
+  <h4>7.2.3.1 Modèle conceptuel</h4>
+  <p>
+    Le modèle de données central s'articule autour d'un <strong>Article</strong> (référence produit), lié à
+    une ou plusieurs <strong>Gamme</strong> (versions successives de la routine d'assemblage), chacune composée
+    de plusieurs <strong>GammeLigne</strong> ordonnées (une opération). Chaque ligne peut référencer un
+    <strong>Opérateur</strong>. La <strong>Compétence</strong> associe un opérateur, une opération et une
+    chaîne, avec un nombre d'occurrences et un temps moyen observé — c'est cette table qui matérialise la
+    matrice de compétences exploitée par le moteur de génération.
+  </p>
+
+  <h4>7.2.3.2 Modèle logique de données</h4>
+  <pre>Article(id, code UNIQUE, nom, description, source, chaine)
+Gamme(id, article_id -&gt; Article, date_creation)
+GammeLigne(id, gamme_id -&gt; Gamme, ordre, operation_libelle,
+           temps_equilibre, target, machine, operateur_id -&gt; Operateur)
+Operateur(id, nom, matricule, actif)
+Competence(id, operateur_id -&gt; Operateur, operation_libelle, chaine,
+           nb_occurrences, temps_moyen,
+           UNIQUE(operateur_id, operation_libelle, chaine))</pre>
+  <p class="legende">Figure : Modèle logique de données (extrait simplifié — voir Annexe 3 pour le schéma SQL complet).</p>
+  <p>
+    Deux choix de conception méritent d'être soulignés. D'une part, l'ordre des opérations d'une gamme
+    (<code>ordre</code>) repose exclusivement sur la position réelle des lignes dans le tableau source, le
+    numéro de poste Excel s'étant révélé trop peu fiable. D'autre part, la <code>chaine</code> est une clé
+    composée « responsable::numéro », car un même numéro de chaîne est réutilisé par différents responsables
+    pour désigner des lignes de production physiquement distinctes — une fusion naïve aurait mélangé à tort
+    des équipes d'opérateurs différentes.
+  </p>
+
+  <h3>7.2.4 Modèle de Machine Learning de prédiction du temps standard</h3>
+  <p>
+    Environ 28 % des gammes historiques ne comportent aucun temps chronométré exploitable, et une opération
+    donnée peut être suggérée à un opérateur qui ne l'a encore jamais réalisée (ni lui, ni personne d'autre sur
+    la chaîne cible n'a de moyenne historique disponible). Pour ces cas, un modèle de régression est entraîné
+    afin de fournir une estimation plausible plutôt que l'absence pure et simple de valeur.
+  </p>
+  <p><strong>Données d'entraînement :</strong> 115 800 lignes réelles (gammes non fictives), dont le temps
+  chronométré est strictement positif — les valeurs nulles ou négatives, résultant d'erreurs de saisie, sont
+  écartées.</p>
+  <p><strong>Caractéristiques (features) :</strong></p>
+  <ul>
+    <li>le libellé de l'opération (texte), vectorisé en TF-IDF (unigrammes et bigrammes, 800 caractéristiques maximum) ;</li>
+    <li>la machine utilisée, encodée en variables indicatrices (<em>one-hot encoding</em>), avec gestion explicite des catégories inconnues en prédiction.</li>
+  </ul>
+  <p><strong>Modèle :</strong> forêt aléatoire de régression (<code>RandomForestRegressor</code>, scikit-learn), 200 arbres, profondeur maximale 20, entraînée sur 80 % des données (92 640 lignes) et évaluée sur les 20 % restants (23 160 lignes), jamais vus à l'entraînement.</p>
+  <table>
+    <caption class="legende">Tableau 4bis : Évaluation du modèle de prédiction de temps, comparée à des références naïves</caption>
+    <tr><th>Approche</th><th>Erreur absolue moyenne (MAE)</th></tr>
+    <tr><td>Prédiction constante = moyenne globale</td><td>30,3 s</td></tr>
+    <tr><td>Prédiction constante = médiane globale</td><td>27,2 s</td></tr>
+    <tr><td><strong>Modèle Random Forest (retenu)</strong></td><td><strong>24,2 s</strong> (RMSE 36,6 s, R² = 0,39)</td></tr>
+  </table>
+  <p>
+    Le gain par rapport aux références naïves est réel mais modeste (R² = 0,39, soit 39 % de la variance
+    expliquée) — cohérent avec la nature des données : des temps saisis à la main sur quatre ans par des
+    dizaines de personnes différentes, sans protocole de chronométrage strictement uniforme. Ce modèle
+    intervient uniquement en <strong>dernier niveau de repli</strong>, après le temps mesuré et la moyenne
+    historique de l'opérateur, et la valeur qu'il produit est toujours explicitement signalée à l'utilisateur
+    (étiquette « prédit par IA » dans l'interface), jamais présentée comme une mesure fiable.
+  </p>
+  <p>
+    Le modèle est entraîné hors-ligne (script <code>scripts/entrainer_modele_temps.py</code>) et sauvegardé au
+    format <code>joblib</code> ; il est chargé une seule fois en mémoire par le service d'inférence
+    (<code>service/ml_service.py</code>), qui renvoie <code>None</code> si aucun modèle n'est présent sur le
+    disque — le moteur de génération continue alors de fonctionner normalement, simplement sans ce troisième
+    niveau de repli.
+  </p>
+
+  <h3>7.2.5 Réalisation du cas d'utilisation « Générer une gamme »</h3>
+  <p><strong>Description du scénario (vision fonctionnelle) :</strong></p>
+  <ol>
+    <li>L'agent de méthode saisit une description et, optionnellement, une chaîne et une SMV cible, puis clique sur « Générer la gamme ».</li>
+    <li>Le frontend envoie <code>POST /gammes/generer</code> au backend.</li>
+    <li>Le service de génération interroge le moteur de matching NLP, qui vectorise la description et calcule sa similarité cosinus avec l'ensemble des documents de gammes indexés, et retient la gamme historique la plus proche.</li>
+    <li>Pour chaque opération de cette gamme, le service interroge la matrice de compétences afin de suggérer l'opérateur le plus expérimenté sur la chaîne cible (avec repli explicite si aucun n'y est trouvé).</li>
+    <li>Le service calcule également, pour chaque opération sans temps mesuré, une estimation à partir du temps moyen de l'opérateur suggéré.</li>
+    <li>Le service interroge en parallèle le classement des chaînes les mieux équipées pour l'ensemble des opérations de la gamme.</li>
+    <li>Si une SMV cible a été fournie, les temps sont redistribués proportionnellement côté frontend.</li>
+    <li>La réponse JSON (opérations, suggestions, chaîne recommandée) est affichée dans un tableau éditable.</li>
+  </ol>
+  <p class="legende">[Figure à insérer : diagramme de séquence du cas d'utilisation « Générer une gamme ».]</p>
+
+  <h3>7.2.6 Les composants et leur déploiement</h3>
+  <p><span class="placeholder">[À compléter : architecture de déploiement retenue (serveur interne LOI Confection, reverse proxy éventuel, configuration réseau), sur le modèle du document de référence.]</span></p>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 8                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c8" style="margin-top:0">8. Tests du système logiciel</h1>
+
+  <h2>8.1 Stratégie de test</h2>
+  <p>Une stratégie de test à plusieurs niveaux a été mise en œuvre, écrite au fil de l'eau à chaque fonctionnalité livrée plutôt qu'en fin de projet :</p>
+  <ul>
+    <li><strong>Tests unitaires et d'intégration backend</strong> (pytest) : chaque endpoint est testé sur son cas nominal et ses cas d'erreur, sur une base de données SQLite en mémoire, entièrement isolée de la base PostgreSQL de production.</li>
+    <li><strong>Tests de bout en bout</strong> (Playwright) : pilotage d'un navigateur réel sur un environnement isolé (port et configuration dédiés), validant le parcours complet — génération, correction, enregistrement, recherche dans l'historique, modification depuis l'historique.</li>
+    <li><strong>Vérifications manuelles ciblées</strong> sur les données réelles importées, pour valider la cohérence métier des suggestions (ex. score de similarité, respect de la chaîne).</li>
+  </ul>
+
+  <h2>8.2 Tests unitaires et d'intégration</h2>
+  <p>
+    La suite de tests backend couvre notamment : la création, la liste (recherche, filtrage, pagination) et la
+    modification des articles et des gammes ; le moteur de matching (recherche vide, top-k, réindexation) ; le
+    service de génération (respect de la chaîne cible, repli sur une autre chaîne avec indicateur explicite,
+    repli sur le temps moyen historique lorsqu'aucun temps n'est mesuré, priorité de la chaîne choisie par
+    l'utilisateur sur la chaîne déduite) ; la recommandation de la chaîne la mieux équipée ; la sauvegarde
+    d'une gamme générée (génération de code unique, résolution des opérateurs par nom) ; la modification d'une
+    ligne de gamme, y compris par nom d'opérateur ; le service de prédiction ML (dégradation propre en
+    l'absence de modèle sur le disque, prédiction positive et cohérente lorsqu'il est présent, y compris sur
+    une opération totalement inédite) ; le troisième niveau de repli du temps estimé (prédiction ML utilisée
+    uniquement si aucun temps mesuré ni aucune moyenne historique n'existe).
+  </p>
+  <p>Résultat : <strong>45 tests automatisés, tous en succès</strong>, exécutés en moins de quatre secondes (le
+  test du modèle ML inclut le chargement réel du fichier <code>joblib</code> entraîné).</p>
+
+  <h2>8.3 Tests de bout en bout (Playwright)</h2>
+  <p>Plusieurs scénarios complets ont été validés par pilotage automatisé d'un navigateur réel :</p>
+  <ul>
+    <li>génération d'une gamme à partir d'une description, vérification du rendu du tableau de résultats ;</li>
+    <li>correction manuelle d'une opération, d'un temps et d'un opérateur, puis enregistrement avec un nom et une date choisis ;</li>
+    <li>retrouvaille de la gamme enregistrée dans l'historique via la recherche texte, et vérification du détail affiché ;</li>
+    <li>modification d'une gamme directement depuis l'historique ;</li>
+    <li>saisie d'une SMV cible avant génération, et vérification que les temps affichés sont immédiatement répartis proportionnellement ;</li>
+    <li>génération sur une opération délibérément inédite (absente de tout historique et de toute compétence), avec vérification que l'étiquette « prédit par IA » s'affiche et que le temps renvoyé par le modèle est cohérent ;</li>
+    <li>vérification de l'absence d'erreur de console JavaScript sur l'ensemble de ces parcours.</li>
+  </ul>
+
+  <h2>8.4 Tests système sur données réelles</h2>
+  <table>
+    <caption class="legende">Tableau 5 : Bilan de l'import et du nettoyage des données réelles</caption>
+    <tr><th>Indicateur</th><th>Résultat</th></tr>
+    <tr><td>Fichiers Excel explorés</td><td>6566</td></tr>
+    <tr><td>Fichiers avec gamme exploitable détectée</td><td>6122 (93 %)</td></tr>
+    <tr><td>Articles réels importés</td><td>5989</td></tr>
+    <tr><td>Lignes de gamme importées (après nettoyage)</td><td>≈ 182 000</td></tr>
+    <tr><td>Lignes parasites détectées et supprimées</td><td>≈ 17 500</td></tr>
+    <tr><td>Opérateurs réels distincts identifiés</td><td>≈ 2300</td></tr>
+    <tr><td>Chaînes de production distinctes identifiées</td><td>36</td></tr>
+    <tr><td>Lignes de compétences reconstruites</td><td>≈ 57 700</td></tr>
+  </table>
+
+  <h2>8.5 Bilan des tests</h2>
+  <table>
+    <caption class="legende">Tableau 6 : Bilan des tests</caption>
+    <tr><th>Type de test</th><th>Résultat</th></tr>
+    <tr><td>Tests unitaires et d'intégration (pytest)</td><td>45/45 (100 %)</td></tr>
+    <tr><td>Scénarios de bout en bout (Playwright)</td><td>Tous validés, aucune erreur console</td></tr>
+    <tr><td>Import de données réelles</td><td>0 erreur bloquante sur 6566 fichiers</td></tr>
+  </table>
+  <p>Globalement, le système est stable, fonctionnel et conforme aux exigences définies au Chapitre 5.</p>
+</div>
+
+<!-- ============================================================= -->
+<!-- CHAPITRE 9                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c9" style="margin-top:0">9. Conclusion générale</h1>
+
+  <h2>Le bilan des résultats obtenus pour l'entreprise</h2>
+  <p>
+    Le projet « Génération intelligente de gammes de montage » a permis de concevoir et de déployer une
+    solution logicielle complète, répondant au besoin de LOI Confection de valoriser son historique de
+    production pour accélérer et fiabiliser la préparation des nouvelles gammes.
+  </p>
+  <p><strong>Résultats principaux obtenus :</strong></p>
+  <ul>
+    <li>Centralisation de l'historique de production : 5989 gammes réelles et environ 182 000 lignes d'opérations importées et nettoyées à partir de plus de 6500 fichiers Excel hétérogènes.</li>
+    <li>Moteur de matching NLP (TF-IDF, similarité cosinus) retrouvant automatiquement la gamme historique la plus proche d'une description libre.</li>
+    <li>Matrice de compétences reconstruite automatiquement (≈ 57 700 lignes), respectant la contrainte métier selon laquelle une chaîne a ses propres opérateurs.</li>
+    <li>Recommandation de la chaîne la mieux équipée pour une production donnée, indépendamment de la chaîne historique.</li>
+    <li>Modèle de Machine Learning (Random Forest) entraîné sur 115 800 temps réellement mesurés, utilisé comme dernier niveau de repli pour l'estimation du temps d'une opération inédite (MAE 24,2 s, contre 27,2-30,3 s pour une moyenne naïve).</li>
+    <li>Calcul et répartition automatique de la SMV sur les opérations d'une gamme.</li>
+    <li>Interface web complète de génération, correction, enregistrement et consultation de l'historique, avec édition possible à tout moment.</li>
+    <li>API REST FastAPI documentée automatiquement, et suite de 45 tests automatisés.</li>
+  </ul>
+
+  <h2>Le bilan des problèmes rencontrés et des solutions apportées</h2>
+  <p>Plusieurs difficultés significatives ont été rencontrées au cours du projet :</p>
+  <ul>
+    <li>
+      <strong>Hétérogénéité extrême des données sources</strong> : en-têtes de colonnes variables, feuilles non
+      nommées de façon homogène, numéros de poste peu fiables.<br>
+      <em>Solution :</em> détection en deux temps (par nom de feuille puis par contenu), dictionnaire de
+      synonymes construit et validé par échantillonnage progressif, abandon du numéro de poste au profit de
+      l'ordre réel des lignes.
+    </li>
+    <li>
+      <strong>Données parasites confondues avec de vraies opérations</strong> (bloc de suivi administratif en
+      bas de tableau).<br>
+      <em>Solution :</em> analyse de fréquence des libellés d'opération pour isoler les motifs récurrents non
+      liés à une opération de montage, avec une liste volontairement restrictive afin de ne jamais supprimer
+      une opération réelle par excès de zèle.
+    </li>
+    <li>
+      <strong>Numérotation de chaîne ambiguë entre responsables</strong> : un même numéro de chaîne pouvait
+      désigner deux lignes physiquement distinctes.<br>
+      <em>Solution :</em> composition d'une clé de chaîne unique combinant le responsable et le numéro.
+    </li>
+    <li>
+      <strong>Temps d'opération manquants sur une part significative de l'historique</strong>.<br>
+      <em>Solution :</em> repli explicite sur le temps moyen historique de l'opérateur suggéré, toujours
+      signalé comme « estimé » dans l'interface plutôt que présenté comme une valeur mesurée.
+    </li>
+  </ul>
+
+  <h2>Les perspectives du projet</h2>
+  <p>Plusieurs axes d'amélioration et d'évolution sont envisageables :</p>
+  <ul>
+    <li>Amélioration du modèle de prédiction de temps (R² actuel de 0,39) par un nettoyage plus poussé des libellés d'opération et des machines (actuellement 1497 valeurs de machine distinctes, en partie des variantes d'écriture d'un même équipement), et par l'ajout de caractéristiques supplémentaires (type de vêtement, chaîne).</li>
+    <li>Introduction d'un balancement de ligne automatique, répartissant la charge de travail entre opérateurs disponibles sur une chaîne.</li>
+    <li>Remplacement ou complément du moteur TF-IDF par des embeddings sémantiques, pour mieux gérer les synonymes et fautes de frappe présents dans les descriptions.</li>
+    <li>Mise en place d'une authentification et d'une gestion des rôles (agent de méthode / responsable).</li>
+    <li>Construction d'un catalogue normalisé d'opérations (aujourd'hui en texte libre), pour fiabiliser davantage les statistiques et le matching.</li>
+  </ul>
+
+  <h2>Le bilan personnel</h2>
+  <p><span class="placeholder">
+    [À compléter personnellement : ce paragraphe doit refléter votre propre expérience — apports techniques
+    (FastAPI, React, PostgreSQL, NLP/scikit-learn, tests automatisés), méthodologiques (démarche itérative,
+    importance de l'exploration de données avant toute conception), professionnels (immersion dans le secteur
+    textile malgache, collaboration avec les équipes de LOI Confection) et humains. Ce paragraphe ne peut pas
+    être rédigé à votre place de façon authentique.]
+  </span></p>
+</div>
+
+<!-- ============================================================= -->
+<!-- REFERENCES                                                      -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c10" style="margin-top:0">10. Références et Bibliographie</h1>
+  <p><span class="placeholder">
+    [À compléter avec vos sources effectivement consultées. Exemples de références pertinentes pour ce sujet,
+    à vérifier et compléter :]
+  </span></p>
+  <ol>
+    <li>Salton, G., Buckley, C., <em>Term-weighting approaches in automatic text retrieval</em>, Information Processing &amp; Management, vol. 24, n°5, 1988, pp. 513–523. (fondement du TF-IDF)</li>
+    <li>Manning, C.D., Raghavan, P., Schütze, H., <em>Introduction to Information Retrieval</em>, Cambridge University Press, 2008.</li>
+    <li>Pedregosa, F. et al., <em>Scikit-learn: Machine Learning in Python</em>, Journal of Machine Learning Research, vol. 12, 2011, pp. 2825–2830.</li>
+    <li>Pinedo, M., <em>Scheduling: Theory, Algorithms, and Systems</em>, Springer, 2016. (contexte production/ordonnancement textile)</li>
+    <li><span class="placeholder">[Documentation officielle FastAPI, React, PostgreSQL — à citer selon les normes de votre établissement.]</span></li>
+  </ol>
+</div>
+
+<!-- ============================================================= -->
+<!-- ANNEXES                                                         -->
+<!-- ============================================================= -->
+<div class="page">
+  <div class="confidentiel">Confidentiel — Usage académique</div>
+  <h1 id="c11" style="margin-top:0">11. Annexes</h1>
+
+  <h3>Annexe 1 : Service de matching NLP (extrait)</h3>
+  <pre>def construire_document_gamme(article: Article) -&gt; str:
+    derniere_gamme = max(article.gammes, key=lambda g: g.date_creation, default=None)
+    operations = [l.operation_libelle for l in derniere_gamme.lignes] if derniere_gamme else []
+    return " ".join([article.nom, *operations])
+
+def rechercher_gammes_similaires(db, description, top_k=5):
+    if _index is None:
+        reindexer(db)
+    vecteur = _index.vectorizer.transform([description])
+    similarites = cosine_similarity(vecteur, _index.matrice)[0]
+    classement = sorted(zip(_index.article_ids, similarites), key=lambda x: x[1], reverse=True)[:top_k]
+    ...</pre>
+
+  <h3>Annexe 2 : Contrainte de chaîne dans la suggestion d'opérateur (extrait)</h3>
+  <pre>def _meilleure_competence(db, operation_libelle, chaine):
+    """Retourne (competence, meme_chaine) : True si trouve sur la
+    bonne chaine, False si repli sur une autre chaine (chaine cible
+    connue), None si la chaine cible est inconnue."""
+    base_query = (
+        db.query(Competence)
+        .join(Operateur, Competence.operateur_id == Operateur.id)
+        .filter(Competence.operation_libelle == operation_libelle)
+        .filter(Operateur.matricule.is_(None))
+    )
+    if chaine:
+        competence = base_query.filter(Competence.chaine == chaine)\
+            .order_by(Competence.nb_occurrences.desc()).first()
+        if competence is not None:
+            return competence, True
+        competence = base_query.order_by(Competence.nb_occurrences.desc()).first()
+        return competence, (False if competence is not None else None)
+    competence = base_query.order_by(Competence.nb_occurrences.desc()).first()
+    return competence, None</pre>
+
+  <h3>Annexe 3 : Modèle de données SQLAlchemy (extrait)</h3>
+  <pre>class Competence(Base_chebdo):
+    __tablename__ = "competence"
+    __table_args__ = (
+        UniqueConstraint("operateur_id", "operation_libelle", "chaine",
+                          name="uq_competence_operateur_operation_chaine"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    operateur_id: Mapped[int] = mapped_column(ForeignKey("operateur.id"))
+    operation_libelle: Mapped[str] = mapped_column(String(200))
+    chaine: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    nb_occurrences: Mapped[int] = mapped_column(Integer, default=0)
+    temps_moyen: Mapped[float | None] = mapped_column(Float, nullable=True)</pre>
+
+  <h3>Annexe 4 : Extraction de la chaîne depuis le chemin source (extrait)</h3>
+  <pre>CHAIN_PATTERN = re.compile(r"(CHAINE|CH|LINE|L)\.?\s*0*(\d+)", re.IGNORECASE)
+
+def extraire_chaine(rel_path):
+    segments = str(rel_path).split("\\")
+    racine = segments[0].strip().upper()
+    for segment in segments[1:-1]:
+        if re.fullmatch(r"\d{4}", segment.strip()):
+            continue  # annee
+        m = CHAIN_PATTERN.search(segment)
+        if m:
+            return f"{racine}::CH{m.group(2).lstrip('0') or '0'}"
+    return None</pre>
+
+  <h3>Annexe 5 : Entraînement du modèle de prédiction de temps (extrait)</h3>
+  <pre>pretraitement = ColumnTransformer(transformers=[
+    ("texte", TfidfVectorizer(max_features=800, ngram_range=(1, 2)), "operation_libelle"),
+    ("machine", OneHotEncoder(handle_unknown="ignore"), ["machine"]),
+])
+modele = Pipeline(steps=[
+    ("pretraitement", pretraitement),
+    ("regresseur", RandomForestRegressor(n_estimators=200, max_depth=20,
+                                          random_state=42, n_jobs=-1)),
+])
+modele.fit(X_train, y_train)
+# MAE  : 24.2 s   RMSE : 36.6 s   R2 : 0.388
+# (115 800 lignes reelles, split 80/20, jamais vu a l'entrainement)</pre>
+
+  <h3>Annexe 6 : Résultat d'un test unitaire de génération de gamme</h3>
+  <pre>tests/test_generation.py::test_generer_priorite_operateur_meme_chaine PASSED
+tests/test_generation.py::test_generer_repli_autre_chaine_si_rien_sur_la_chaine_cible PASSED
+tests/test_generation.py::test_generer_temps_estime_depuis_historique_si_absent PASSED
+tests/test_generation.py::test_generer_temps_source_ml_si_rien_dautre_disponible PASSED
+tests/test_chaine_suggestion.py::test_generer_suggere_la_chaine_la_mieux_equipee PASSED
+tests/test_ml_service.py::test_predire_temps_avec_modele PASSED
+================= 45 passed in 3.0s =================</pre>
+
+  <h3>Annexe 7 : Schéma SQL complet</h3>
+  <p><span class="placeholder">[Voir le fichier <code>backend/sql/schema.sql</code> du projet, non reproduit intégralement ici pour ne pas alourdir le rapport.]</span></p>
+
+  <h3>Annexe 8 : Captures d'écran</h3>
+  <p class="legende">[À insérer : formulaire de génération, tableau de résultat avec suggestions (y compris l'étiquette « prédit par IA »), page Historique avec recherche, vue de détail éditable.]</p>
+
+  <footer class="numero-page">Fin du document — généré à partir du projet Gamme_montage_M2</footer>
+</div>
+
+</body>
+</html>

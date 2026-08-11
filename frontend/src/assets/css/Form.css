@@ -25,6 +25,11 @@
   border-color: var(--color-accent);
 }
 
+textarea.form-input {
+  resize: vertical;
+  font-family: inherit;
+}
+
 .form-input-file {
   padding: 0.4rem 0.6rem;
   cursor: pointer;

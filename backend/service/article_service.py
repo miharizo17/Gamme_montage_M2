@@ -31,26 +31,42 @@ def vers_article_detail(article: Article, gamme: Gamme | None) -> ArticleDetailO
         nom=article.nom,
         description=article.description,
         source=article.source,
+        chaine=article.chaine,
+        date_creation=gamme.date_creation if gamme else None,
         gamme_id=gamme.id if gamme else None,
         lignes_gamme=lignes_gamme,
     )
 
 
-def lister_articles(db: Session, skip: int = 0, limit: int = 20) -> ArticleListOut:
-    total = db.query(func.count(Article.id)).scalar()
-    articles = (
-        db.query(Article)
-        .order_by(Article.id)
-        .offset(skip)
-        .limit(limit)
-        .all()
+def lister_articles(
+    db: Session, skip: int = 0, limit: int = 20, q: str | None = None, chaine: str | None = None
+) -> ArticleListOut:
+    # Derniere date de Gamme par article, jointe sans requete N+1.
+    dates_par_article = (
+        db.query(Gamme.article_id, func.max(Gamme.date_creation).label("date_creation"))
+        .group_by(Gamme.article_id)
+        .subquery()
     )
-    return ArticleListOut(
-        total=total,
-        skip=skip,
-        limit=limit,
-        items=[ArticleOut.model_validate(a) for a in articles],
+
+    filtre = db.query(Article, dates_par_article.c.date_creation).outerjoin(
+        dates_par_article, dates_par_article.c.article_id == Article.id
     )
+    if q:
+        motif = f"%{q}%"
+        filtre = filtre.filter((Article.nom.ilike(motif)) | (Article.code.ilike(motif)))
+    if chaine:
+        filtre = filtre.filter(Article.chaine == chaine)
+
+    total = filtre.with_entities(func.count(Article.id)).scalar()
+    lignes = filtre.order_by(Article.id).offset(skip).limit(limit).all()
+
+    items = []
+    for article, date_creation in lignes:
+        item = ArticleOut.model_validate(article)
+        item.date_creation = date_creation
+        items.append(item)
+
+    return ArticleListOut(total=total, skip=skip, limit=limit, items=items)
 
 
 def obtenir_article_detail(db: Session, article_id: int) -> ArticleDetailOut | None:

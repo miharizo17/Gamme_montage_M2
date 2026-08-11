@@ -8,17 +8,20 @@ from schema import (
     ArticleListOut,
     ArticleOut,
     ArticleUpdate,
+    ChaineOut,
     CompetenceOut,
+    EnregistrerGammeIn,
     GammeGenereeOut,
     GammeLigneCreate,
     GammeLigneOut,
     GammeLigneUpdate,
     GenererGammeIn,
     MatchGammeOut,
+    OperateurChaineOut,
     OperateurListOut,
     RechercheDescriptionIn,
 )
-from service import article_service, gamme_service, generation_service, matching_service, operateur_service
+from service import article_service, chaine_service, gamme_service, generation_service, matching_service, operateur_service
 from service.article_service import CodeDejaExistant
 
 app = FastAPI(title="Gamme Montage API")
@@ -36,9 +39,11 @@ def get_db():
 def lister_articles(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    q: str | None = Query(None, description="Recherche texte libre sur le nom/code"),
+    chaine: str | None = Query(None, description="Filtrer sur une chaine precise"),
     db: Session = Depends(get_db),
 ):
-    return article_service.lister_articles(db, skip=skip, limit=limit)
+    return article_service.lister_articles(db, skip=skip, limit=limit, q=q, chaine=chaine)
 
 
 @app.get("/articles/{article_id}", response_model=ArticleDetailOut)
@@ -113,10 +118,25 @@ def reindexer_moteur_matching(db: Session = Depends(get_db)):
 
 @app.post("/gammes/generer", response_model=GammeGenereeOut)
 def generer_gamme(data: GenererGammeIn, db: Session = Depends(get_db)):
-    resultat = generation_service.generer_gamme(db, data.description)
+    resultat = generation_service.generer_gamme(db, data.description, chaine=data.chaine)
     if resultat is None:
         raise HTTPException(status_code=404, detail="Aucune gamme historique exploitable trouvee")
     return resultat
+
+
+@app.post("/gammes/enregistrer", response_model=ArticleDetailOut, status_code=201)
+def enregistrer_gamme(data: EnregistrerGammeIn, db: Session = Depends(get_db)):
+    return gamme_service.enregistrer_gamme_generee(db, data)
+
+
+@app.get("/chaines", response_model=list[ChaineOut])
+def lister_chaines(db: Session = Depends(get_db)):
+    return chaine_service.lister_chaines(db)
+
+
+@app.get("/chaines/{chaine}/operateurs", response_model=list[OperateurChaineOut])
+def lister_operateurs_chaine(chaine: str, db: Session = Depends(get_db)):
+    return chaine_service.lister_operateurs_chaine(db, chaine)
 
 
 def main():

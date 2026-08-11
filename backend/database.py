@@ -26,7 +26,12 @@ def build_database_url() -> str:
     port = os.getenv("DB_PORT", "5432")
     name = os.getenv("DB_NAME", "gamme_montage")
     user = quote_plus(os.getenv("DB_USER", "postgres"))
-    password = quote_plus(os.getenv("DB_PASSWORD", "Kanto17"))
+    password = quote_plus(os.getenv("DB_PASSWORD", ""))
+    if not os.getenv("DB_PASSWORD") and not direct_url:
+        raise RuntimeError(
+            "DB_PASSWORD manquant : definissez-le dans le fichier .env "
+            "(a la racine de Gamme_montage_M2, jamais commite) plutot que dans le code source."
+        )
     return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 
 

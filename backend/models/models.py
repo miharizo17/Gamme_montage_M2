@@ -28,6 +28,9 @@ class Article(Base_chebdo):
     nom: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     source: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # Chaine/ligne de production (extraite du chemin source, ex: "CH2",
+    # "LINE 9 LAURETTE"). None si non detectable (chemin trop irregulier).
+    chaine: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     gammes: Mapped[list["Gamme"]] = relationship(back_populates="article")
 
@@ -72,11 +75,17 @@ class Competence(Base_chebdo):
     a l'import."""
 
     __tablename__ = "competence"
-    __table_args__ = (UniqueConstraint("operateur_id", "operation_libelle", name="uq_competence_operateur_operation"),)
+    __table_args__ = (
+        UniqueConstraint("operateur_id", "operation_libelle", "chaine", name="uq_competence_operateur_operation_chaine"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     operateur_id: Mapped[int] = mapped_column(ForeignKey("operateur.id"), nullable=False)
     operation_libelle: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Chaine sur laquelle cette competence a ete observee (une chaine a ses
+    # propres operateurs : on ne suggere jamais un operateur d'une autre
+    # chaine). None = chaine inconnue pour cette observation.
+    chaine: Mapped[str | None] = mapped_column(String(100), nullable=True)
     nb_occurrences: Mapped[int] = mapped_column(Integer, default=0)
     temps_moyen: Mapped[float | None] = mapped_column(Float, nullable=True)
 

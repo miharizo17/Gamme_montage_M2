@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 from .gamme import GammeLigneOut
@@ -11,6 +13,9 @@ class ArticleOut(BaseModel):
     nom: str
     description: str | None = None
     source: str | None = None
+    chaine: str | None = None
+    # Date d'enregistrement de la gamme (celle de sa derniere Gamme).
+    date_creation: datetime | None = None
 
 
 class ArticleListOut(BaseModel):

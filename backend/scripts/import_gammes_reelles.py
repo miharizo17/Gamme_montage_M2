@@ -66,6 +66,29 @@ def build_code(rel_path: Path) -> str:
     return s
 
 
+# Une chaine a ses propres operateurs : on ne suggere jamais un operateur
+# d'une autre chaine (meme numero de chaine reutilise par des dossiers
+# racine differents = lignes physiquement differentes -> on combine les
+# deux : "RACINE::CHn").
+CHAIN_PATTERN = re.compile(r"(CHAINE|CH|LINE|L)\.?\s*0*(\d+)", re.IGNORECASE)
+
+
+def extraire_chaine(rel_path: Path) -> str | None:
+    segments = str(rel_path).split("\\")
+    if len(segments) < 2:
+        return None
+    racine = segments[0].strip().upper()
+    for segment in segments[1:-1]:
+        seg = segment.strip()
+        if re.fullmatch(r"\d{4}", seg):  # annee
+            continue
+        m = CHAIN_PATTERN.search(seg)
+        if m:
+            num = m.group(2).lstrip("0") or "0"
+            return f"{racine}::CH{num}"
+    return None
+
+
 def parse_float(value):
     if value is None:
         return None
@@ -111,12 +134,18 @@ def construire_index_colonnes(ws, header_row_idx):
     return index
 
 
-# Restes de zone de signature ("Prepare par : ...", initiales) qui
-# atterrissent parfois dans la colonne OPERATION en bas de tableau. Liste
-# volontairement restreinte a des cas surs : on ne filtre jamais un
-# libelle qui ressemble a une vraie operation (ex: REPASSAGE, BOUT DE
-# CHAINE), meme incomplet par ailleurs.
-LIBELLES_PARASITES = {"IE", "HH", "AA", "II", "PA", "PREPARE PAR", "VERIFIE PAR", "APPROUVE PAR", "CONTROLE PAR"}
+# Restes de zone de signature ou de bloc "fiche de suivi" (chef de chaine,
+# effectif, min produite/presence...) qui atterrissent parfois dans la
+# colonne OPERATION en bas de tableau. Liste volontairement restreinte a
+# des cas surs : on ne filtre jamais un libelle qui ressemble a une vraie
+# operation (ex: REPASSAGE, BOUT DE CHAINE), meme incomplet par ailleurs.
+LIBELLES_PARASITES = {
+    "IE", "HH", "AA", "II", "PA", "EE", "GG",
+    "PREPARE PAR", "VERIFIE PAR", "APPROUVE PAR", "CONTROLE PAR",
+    "CHEF DE CHAINE", "VISER PAR :", "VISER PAR", "TECHNICAL",
+    "GUIDE ET PIEDS", "NOMBRE", "NOMBRES", "MIN PRODUITE", "MIN PRESENCE",
+    "QTE PAQUET",
+}
 
 
 def extraire_lignes(ws, header_row_idx, colonnes):
@@ -132,7 +161,10 @@ def extraire_lignes(ws, header_row_idx, colonnes):
         operation_libelle = get("operation")
         if operation_libelle is None or str(operation_libelle).strip() == "":
             continue
-        if normalize_libelle(operation_libelle) in LIBELLES_PARASITES:
+        libelle_normalise = normalize_libelle(operation_libelle)
+        if libelle_normalise in LIBELLES_PARASITES:
+            continue
+        if re.fullmatch(r"\d+", libelle_normalise):  # nombre isole (ex: "30")
             continue
 
         operateur_nom = get("operateur")
@@ -241,6 +273,7 @@ def importer(data_dir: Path, limit=None, commit_every=25):
                 nom=path.stem.strip(),
                 description=None,
                 source=str(rel_path),
+                chaine=extraire_chaine(rel_path),
             )
             db.add(article)
             db.flush()

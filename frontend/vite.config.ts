@@ -12,6 +12,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/api/gamme-montage': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/gamme-montage/, ''),
+      },
       '/api': {
         target: 'https://erp.loimada.com:1467/api',
         //  target: 'http://127.0.0.1:8000',
